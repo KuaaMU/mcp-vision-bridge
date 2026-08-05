@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 /**
  * llm-vision-mcp — Model Context Protocol server that gives text-only LLM
  * coding agents vision.
