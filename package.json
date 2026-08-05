@@ -1,12 +1,12 @@
 {
-  "name": "llm-vision-mcp",
+  "name": "mcp-vision-bridge",
   "version": "0.1.0",
-  "description": "MCP server that gives text-only LLM coding agents vision: analyze local files, URLs, base64, clipboard, or raw bytes through your choice of multimodal model.",
+  "description": "Give text-only LLM coding agents (DeepSeek V4 Flash/Pro, Qwen, Kimi) vision via any multimodal model. One MCP tool, works with Claude Code, opencode, Codex, Kimi Code, PI.",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
-    "llm-vision-mcp": "dist/index.js"
+    "mcp-vision-bridge": "dist/index.js"
   },
   "files": [
     "dist"

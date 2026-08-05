@@ -12,7 +12,7 @@ Works with **Claude Code · opencode · Codex · Kimi Code · PI · Cursor** and
 
 <br>
 
-`npx -y llm-vision-mcp` → 60 seconds to working vision.
+`npx -y mcp-vision-bridge` → 60 seconds to working vision.
 
 </div>
 
@@ -52,8 +52,8 @@ The image never reaches the agent. A complete text description does. The agent c
 ### 1. Install
 
 ```bash
-npm install -g llm-vision-mcp        # global install
-npx -y llm-vision-mcp                # or run without installing
+npm install -g mcp-vision-bridge      # global install
+npx -y mcp-vision-bridge              # or run without installing
 ```
 
 Requires **Node.js ≥ 18**.
@@ -87,7 +87,7 @@ Pick your platform. The agent immediately gains `analyze_image`.
   "mcpServers": {
     "vision": {
       "command": "npx",
-      "args": ["-y", "llm-vision-mcp"],
+      "args": ["-y", "mcp-vision-bridge"],
       "env": {
         "VISION_OPENAI_BASE_URL": "https://opencode.ai/zen/go/v1",
         "VISION_OPENAI_API_KEY": "sk-...",
@@ -98,7 +98,7 @@ Pick your platform. The agent immediately gains `analyze_image`.
 }
 ```
 
-Or: `claude mcp add vision -- npx -y llm-vision-mcp`
+Or: `claude mcp add vision -- npx -y mcp-vision-bridge`
 </details>
 
 <details>
@@ -109,7 +109,7 @@ Or: `claude mcp add vision -- npx -y llm-vision-mcp`
   "mcp": {
     "vision": {
       "type": "local",
-      "command": ["npx", "-y", "llm-vision-mcp"],
+      "command": ["npx", "-y", "mcp-vision-bridge"],
       "environment": {
         "VISION_OPENAI_BASE_URL": "https://opencode.ai/zen/go/v1",
         "VISION_OPENAI_API_KEY": "sk-...",
@@ -127,7 +127,7 @@ Or: `claude mcp add vision -- npx -y llm-vision-mcp`
 ```toml
 [mcp_servers.vision]
 command = "npx"
-args = ["-y", "llm-vision-mcp"]
+args = ["-y", "mcp-vision-bridge"]
 env = { VISION_OPENAI_BASE_URL = "https://opencode.ai/zen/go/v1", VISION_OPENAI_API_KEY = "sk-...", VISION_MODEL = "mimo-v2.5" }
 ```
 </details>
@@ -140,7 +140,7 @@ env = { VISION_OPENAI_BASE_URL = "https://opencode.ai/zen/go/v1", VISION_OPENAI_
   "mcpServers": {
     "vision": {
       "command": "npx",
-      "args": ["-y", "llm-vision-mcp"],
+      "args": ["-y", "mcp-vision-bridge"],
       "env": {
         "VISION_OPENAI_BASE_URL": "https://opencode.ai/zen/go/v1",
         "VISION_OPENAI_API_KEY": "sk-...",
@@ -160,7 +160,7 @@ env = { VISION_OPENAI_BASE_URL = "https://opencode.ai/zen/go/v1", VISION_OPENAI_
   "mcpServers": {
     "vision": {
       "command": "npx",
-      "args": ["-y", "llm-vision-mcp"],
+      "args": ["-y", "mcp-vision-bridge"],
       "env": {
         "VISION_OPENAI_BASE_URL": "https://opencode.ai/zen/go/v1",
         "VISION_OPENAI_API_KEY": "sk-...",
@@ -172,7 +172,7 @@ env = { VISION_OPENAI_BASE_URL = "https://opencode.ai/zen/go/v1", VISION_OPENAI_
 ```
 </details>
 
-Any other MCP client: register a stdio server running `npx -y llm-vision-mcp`.
+Any other MCP client: register a stdio server running `npx -y mcp-vision-bridge`.
 
 ---
 
