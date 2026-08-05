@@ -3,7 +3,7 @@ import { findRecentImages, extractImagesFromTranscript } from "./discover.js";
 import { promises as fs } from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { pngFixture } from "../__fixtures__/images.js";
+import { pngFixture, jpegFixture } from "../__fixtures__/images.js";
 
 /** Point the Cowork scanner at a temp dir via LOCALAPPDATA. */
 function setLocalAppData(dir: string): () => void {
@@ -75,6 +75,38 @@ describe("findRecentImages", () => {
     } finally {
       restore();
       await fs.rm(base, { recursive: true, force: true });
+    }
+  });
+
+  it("discovers Claude Code CLI pasted images from ~/.claude/image-cache", async () => {
+    const home = await fs.mkdtemp(path.join(os.tmpdir(), "home-"));
+    const prevHome = process.env.USERPROFILE ?? process.env.HOME;
+    const restoreHome = () => {
+      if (prevHome) {
+        process.env.USERPROFILE = prevHome;
+        process.env.HOME = prevHome;
+      } else {
+        delete process.env.USERPROFILE;
+        delete process.env.HOME;
+      }
+    };
+    process.env.USERPROFILE = home;
+    process.env.HOME = home;
+    try {
+      const cacheDir = path.join(home, ".claude", "image-cache", "abc123", "");
+      await fs.mkdir(cacheDir, { recursive: true });
+      await fs.writeFile(path.join(cacheDir, "1.png"), pngFixture());
+      await fs.writeFile(path.join(cacheDir, "2.png"), jpegFixture());
+      await fs.writeFile(path.join(cacheDir, "notes.txt"), "not an image");
+      const images = await findRecentImages({ limit: 10, includeClaudeTranscript: false });
+      const cache = images.filter((i) => i.source.startsWith("claude:image-cache:"));
+      expect(cache.length).toBe(2);
+      expect(cache.some((i) => i.filePath?.endsWith("1.png"))).toBe(true);
+      expect(cache.some((i) => i.filePath?.endsWith("2.png"))).toBe(true);
+      expect(cache.some((i) => i.filePath?.endsWith("notes.txt"))).toBe(false);
+    } finally {
+      restoreHome();
+      await fs.rm(home, { recursive: true, force: true });
     }
   });
 });

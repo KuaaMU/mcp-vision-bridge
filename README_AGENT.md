@@ -30,12 +30,17 @@ only way to look.
 
 | Situation | Use |
 |---|---|
-| User gave a file path (or one exists in the workspace) | `image="<path>"` — no user action needed |
-| User pasted an image (Claude Code / Cowork / Codex / Grok) | `image="recent"` — auto-finds the most recent pasted image across agents |
+| User gave a file path, or one exists in the workspace/prompt | **`image="<path>"` — best, works everywhere.** Use this whenever a path is available. |
+| User dragged an image file into the chat | The drag inserts a real path in the prompt. Use it directly: `image="<that path>"`. |
+| User pasted an image (Claude Code CLI / Cowork / Codex / Grok) | `image="recent"` — auto-finds the most recent pasted image across agents |
 | User pasted several images in this session | `image="session"` — list/analyze images pasted in the current session |
 | User just took a screenshot / copied an image to clipboard | `image="clipboard"` — reads the OS clipboard |
-| User pasted an image and you got `[Unsupported Image]` | Use `image="recent"` — the hook has already saved it to a file. Fallback: ask for a path |
+| User pasted an image and you got `[Unsupported Image]` / nothing | **The desktop-GUI paste may have failed silently.** Ask the user to **drag the image file into the chat** (inserts a path) or paste a path, then use it |
 | User gave a URL | `image="https://…"` |
+
+**Key rule:** a real file path is the most reliable source — it works in every
+agent's TUI and GUI. Prefer asking for a path or a dragged-in file over relying
+on clipboard or paste attachment, which some desktop GUIs drop silently.
 
 ## Choosing `task` vs `prompt`
 

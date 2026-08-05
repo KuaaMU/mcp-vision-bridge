@@ -112,27 +112,35 @@ MCP server loads and this skill is active. Then proceed to **B**.
 
 ### Decision tree — how to get the image
 
+**Primary rule: use a real file path.** A path works identically in every coding
+agent's TUI and GUI (Claude Code, Cowork, Codex, opencode, PI, …) — no clipboard,
+no GUI-paste quirks. Prefer paths first; fall back to auto-discovery.
+
 Check in this order:
 
-1. **A real image path exists** — the user gave you a file path, or a path is
-   available in the conversation/workspace (e.g. `C:\shots\bug.png`,
-   `./screenshots/ui.png`).
+1. **A file path exists (BEST — works everywhere).** The user gave you a path, or
+   one appears in the conversation/prompt, or you can construct one
+   (`C:\shots\bug.png`, `./screenshots/ui.png`, a dragged-in file).
    → Call `analyze_image(image="<path>", ...)` directly. **No user action needed.**
+   If the user pasted an image but it failed to attach (e.g. `[Unsupported Image]`
+   or a GUI that didn't recognize the paste), **ask them to drag the file into the
+   input box or paste a path** — dragging an image file generates its path in the
+   prompt on every platform.
 
-2. **The user pasted an image into the chat** — it's captured in the agent's
-   transcript/session. Use auto-discovery:
+2. **The user pasted an image that WAS captured** (Claude Code CLI transcript,
+   Cowork desktop `uploads/`, Codex `attachments/`). Use auto-discovery:
    - `image="recent"` → analyze the most recently pasted image.
    - `image="session"` → list/analyze images pasted in this session.
-   → The tool scans Cowork desktop uploads, Codex attachments, Grok session
-   images, and Claude transcripts automatically. No clipboard dependency.
+   → The tool scans Cowork uploads, Codex attachments, Grok session images, and
+   Claude transcripts automatically. No clipboard dependency.
 
 3. **The image is on the system clipboard** — a screenshot was just taken, or the
    user copied an image (Ctrl+C). This is a fast path for "look at my screen".
    → Call `analyze_image(image="clipboard", ...)`.
 
-4. **The user pasted an image and you got `[Unsupported Image]`** — you have the
-   placeholder but no path. Use `image="recent"` to find it (the hook saves it to
-   a file), or ask the user to save it to a file / copy to clipboard.
+4. **Nothing resolved yet** — you have no path, discovery found nothing, and the
+   clipboard is empty. **Do NOT guess.** Ask the user to either (a) save the image
+   and give a path, or (b) drag the image file into the chat — a path will appear.
 
 ### Calling the tool
 
@@ -161,15 +169,22 @@ get a path + summary instead of a huge blob in context.
 
 | User intent | What you do |
 |---|---|
-| "看看这个截图 / 分析这个报错" | If path given → analyze it. Else `image="recent"` auto-finds the pasted image, then analyze. |
+| "看看这个截图 / 分析这个报错" | If a path is in context → analyze it. Else ask user to **drag the image file in** (generates a path) or paste a path, then analyze. |
 | "这个 UI 怎么样 / 描述下这个页面" | `analyze_image(task="ui")`. |
 | "把这段文字提取出来 / OCR" | `analyze_image(task="ocr")`. |
 | "这张图里是什么？" | `analyze_image(task="describe")` or `qa` with a `prompt`. |
-| Pasted image shows `[Unsupported Image]` | Guide the user (message above), get a path or clipboard, then analyze. |
-| "帮我看下我屏幕" / "当前窗口" | Tell user to screenshot + copy to clipboard, then `analyze_image(image="clipboard")`. |
+| Pasted image shows `[Unsupported Image]` | The paste failed (common in desktop GUI). Ask user to **drag the file into the chat** or paste a path — a real path appears, then analyze. |
+| "帮我看下我屏幕" / "当前窗口" | Tell user to save the screenshot to a file (or drag it in) and give you the path, then `analyze_image(image="<path>")`. |
 
 ## Important rules
 
+- **Path first.** The most reliable way to get an image into `analyze_image` is a
+  real file path — it works in every agent (TUI and GUI). Prefer asking for a
+  path or a dragged-in file over relying on clipboard or paste attachment.
+- **Desktop-GUI pastes can fail silently.** Some desktop GUIs (e.g. Claude
+  desktop) may not register a pasted image at all (`imageCount=0`) — no file, no
+  transcript entry, and the bytes are lost. If discovery finds nothing, ask the
+  user to drag the image file into the chat or paste its path.
 - **Never pretend to see the image.** If you have no path, no URL, and the
   clipboard is empty, you genuinely cannot see it — ask the user, don't fabricate.
 - **Never skip the tool.** Even if you think you understand from context, the

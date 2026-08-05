@@ -120,18 +120,46 @@ async function scanCoworkUploads(limit: number): Promise<DiscoveredImage[]> {
 }
 
 /** Extract base64 image blocks from a Claude Code session transcript. */
-export function extractImagesFromTranscript(text: string, limit: number): DiscoveredImage[] {
+export function extractImagesFromTranscript(
+  text: string,
+  limit: number,
+  fallbackMtime = Date.now(),
+): DiscoveredImage[] {
   const out: DiscoveredImage[] = [];
-  const re = /\{"type":"image","source":\{"type":"base64","media_type":"([^"]+)","data":"([^"]+)"\}\}/g;
-  let m: RegExpExecArray | null;
-  while ((m = re.exec(text)) !== null && out.length < limit) {
+  for (const rawLine of text.split(/\r?\n/)) {
+    if (out.length >= limit) break;
+    if (!rawLine.includes('"type":"image"')) continue;
+    let line: Record<string, unknown>;
     try {
-      const bytes = Buffer.from(m[2], "base64");
-      if (bytes.length > 0) {
-        out.push({ source: "claude:transcript", bytes, mime: m[1], mtimeMs: Date.now() });
-      }
+      line = JSON.parse(rawLine);
     } catch {
-      /* skip malformed */
+      continue;
+    }
+    // Use the line's real timestamp so ordering reflects when the image was
+    // pasted, falling back to `fallbackMtime` for malformed/absent stamps.
+    const ts = typeof line.timestamp === "string" ? Date.parse(line.timestamp) : NaN;
+    const mtimeMs = Number.isFinite(ts) && ts > 0 ? ts : fallbackMtime;
+    const msg = line.message as Record<string, unknown> | undefined;
+    const content = (msg?.content ?? line.content) as Array<Record<string, unknown>> | undefined;
+    if (!Array.isArray(content)) continue;
+    for (const block of content) {
+      if (out.length >= limit) break;
+      if (block?.type !== "image") continue;
+      const src = block.source as Record<string, unknown> | undefined;
+      if (src?.type !== "base64" || typeof src.data !== "string") continue;
+      try {
+        const bytes = Buffer.from(src.data, "base64");
+        if (bytes.length > 0) {
+          out.push({
+            source: "claude:transcript",
+            bytes,
+            mime: typeof src.media_type === "string" ? src.media_type : "image/png",
+            mtimeMs,
+          });
+        }
+      } catch {
+        /* skip malformed */
+      }
     }
   }
   return out;
@@ -216,6 +244,12 @@ export async function findRecentImages(
   // 5. Our own hook snapshots (transcript extraction fallback).
   const pasteRoot = path.join(home, ".claude", "vision-paste");
   all.push(...(await scanDirForImages(pasteRoot, "vision-paste", limit)));
+
+  // 6. Claude Code CLI pasted-image cache: ~/.claude/image-cache/<uuid>/N.png.
+  //    This is where the CLI/TUI actually writes pasted images (both Ctrl+V and
+  //    drag-drop) — each session gets its own uuid dir with numbered files.
+  const imageCacheRoot = path.join(home, ".claude", "image-cache");
+  all.push(...(await scanDirForImages(imageCacheRoot, "claude:image-cache", limit)));
 
   // Newest first, dedupe by filePath (or bytes hash), cap at limit.
   all.sort((a, b) => b.mtimeMs - a.mtimeMs);

@@ -75,14 +75,19 @@ After install, **restart your agent**, then:
 
 <img src="docs/usage-flow.svg" alt="How to use: screenshot → copy → ask → done" width="900"/>
 
-1. **Paste an image** (Ctrl+V in Claude Code / Cowork, or drag a file in)
+**Best way — drag the image file into the chat.** Dragging an image file into
+any agent (TUI or GUI) inserts its real path, which `analyze_image` accepts
+directly — works identically in Claude Code, Cowork, Codex, opencode, PI, and
+more. No clipboard, no paste quirks.
+
+1. **Drag an image file into the input box** (or Ctrl+V in Claude Code / Cowork)
 2. Say **"看看这个"** (or "analyze this", "what's the error?")
 3. Your agent calls `analyze_image` → the vision model describes it in detail
 
-Paste 3 images? All 3 are captured (the hook reads your session transcript —
-lossless, multi-image — no clipboard). The auto-loop hook (Claude Code) makes
-"paste + ask" enough. Cowork and Codex save pasted images to files automatically;
-`image="recent"` finds them. For other agents, give a file path.
+Paste 3 images? The hook reads your session transcript (lossless, multi-image).
+Cowork and Codex save pasted images to files automatically; `image="recent"`
+finds them. If a desktop GUI doesn't register a paste (it can fail silently),
+just **drag the file in** — a path always works.
 
 ### The one tool
 
