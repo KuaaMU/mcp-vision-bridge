@@ -65,6 +65,11 @@ You'll be prompted for three things:
 - **API key** — stored as `VISION_OPENAI_API_KEY` in your shell profile, never in JSON
 - **Model** — e.g. `mimo-v2.5`, `gpt-4o`
 
+For **Claude Code**, the installer also asks whether to add an **auto-loop hook**:
+whenever the clipboard holds an image and you type something like *"看看这个"*,
+the hook tells your agent to call `analyze_image(image="clipboard")` automatically —
+no extra prompting needed.
+
 Then **restart your agent**. Screenshot something, copy it (Ctrl+C), and say:
 *"看剪贴板，分析这个报错"* — your text-only agent will call `analyze_image` and
 describe it through the vision model.

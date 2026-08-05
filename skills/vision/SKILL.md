@@ -48,7 +48,15 @@ The installer will:
 3. Write the API key into the shell profile (env var) — NOT into config files.
 4. Write the MCP server config into the platform's config file.
 5. Copy this skill into place.
-6. Print "restart your agent" instructions.
+6. Optionally install the **auto-loop hook** (Claude Code): a UserPromptSubmit
+   hook that detects when the clipboard holds an image and the user's message
+   looks like a "look at this" request, then injects guidance so you
+   automatically call `analyze_image(image="clipboard")`.
+7. Print "restart your agent" instructions.
+
+> **If a `[vision-bridge]` system message appears in your context**, that's the
+> auto-loop hook firing: the user copied an image and wants you to look at it.
+> Follow it — call `analyze_image(image="clipboard", ...)`.
 
 **A2. Manual path — no repo on machine:**
 
