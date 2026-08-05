@@ -12,6 +12,19 @@ Works with **Claude Code · Codex · opencode · Kimi · PI · Cursor** and any 
 
 ---
 
+## Why you need this
+
+Your agent can't see. You paste a screenshot → *"I can't see images."* You
+transcribe the error by hand. With this, the agent calls one tool and gets a
+complete text description — verbatim text, layout, colors, anomalies — and can
+debug, fix, and explain.
+
+> **Not a vision model.** It's a bridge: it sends your image to a multimodal
+> model you already pay for (mimo, Claude, Gemini, GPT-4o, Qwen-VL…) and returns
+> a detailed description. No images ever enter your agent's context.
+
+---
+
 ## 🚀 Install (pick your agent — that's the whole setup)
 
 <img src="docs/install-decision.svg" alt="Which install path to choose" width="900"/>
@@ -90,19 +103,6 @@ analyze_image(
 
 ---
 
-## Why you need this
-
-Your agent can't see. You paste a screenshot → *"I can't see images."* You
-transcribe the error by hand. With this, the agent calls one tool and gets a
-complete text description — verbatim text, layout, colors, anomalies — and can
-debug, fix, and explain.
-
-> **Not a vision model.** It's a bridge: it sends your image to a multimodal
-> model you already pay for (mimo, Claude, Gemini, GPT-4o, Qwen-VL…) and returns
-> a detailed description. No images ever enter your agent's context.
-
----
-
 ## Demo (mimo-v2.5)
 
 `analyze_image` → describe/ocr → detailed text. The same tool works with any vision model.
@@ -111,24 +111,6 @@ debug, fix, and explain.
 `文件(F) 编辑(E) 格式(O) 查看(V) 帮助(H)` and the whole body, in reading order.
 
 **Describe a diagram** → elements, spatial layout, colors, and any anomaly, enumerated.
-
----
-
-## Configuration
-
-All via environment variables (the MCP reads them from your agent's server config).
-
-| Variable | When | Example |
-|---|---|---|
-| `VISION_OPENAI_BASE_URL` | OpenAI-compatible | `https://opencode.ai/zen/go/v1` |
-| `VISION_OPENAI_API_KEY` | OpenAI-compatible | `sk-...` |
-| `VISION_MODEL` | always | `mimo-v2.5`, `gpt-4o`, `qwen-vl-max` |
-| `VISION_PROVIDER` | non-openai | `anthropic` \| `gemini` |
-| `VISION_ANTHROPIC_API_KEY` | anthropic | `sk-ant-...` |
-| `VISION_GEMINI_API_KEY` | gemini | `AIza...` |
-| `VISION_MAX_TOKENS` | optional | `2048` (bump to `3000+` for dense screenshots) |
-| `VISION_TIMEOUT_MS` | optional | `30000` |
-| `VISION_BLOCK_PRIVATE_URLS` | optional | `true` to block localhost fetches |
 
 ---
 
@@ -152,6 +134,24 @@ Install them all with the plugin (Claude Code) or `install.sh` (any agent).
 
 Pure text in, pure text out. The server never interprets the image — it fetches
 the bytes and lets your vision model do the seeing.
+
+---
+
+## Configuration
+
+All via environment variables (the MCP reads them from your agent's server config).
+
+| Variable | When | Example |
+|---|---|---|
+| `VISION_OPENAI_BASE_URL` | OpenAI-compatible | `https://opencode.ai/zen/go/v1` |
+| `VISION_OPENAI_API_KEY` | OpenAI-compatible | `sk-...` |
+| `VISION_MODEL` | always | `mimo-v2.5`, `gpt-4o`, `qwen-vl-max` |
+| `VISION_PROVIDER` | non-openai | `anthropic` \| `gemini` |
+| `VISION_ANTHROPIC_API_KEY` | anthropic | `sk-ant-...` |
+| `VISION_GEMINI_API_KEY` | gemini | `AIza...` |
+| `VISION_MAX_TOKENS` | optional | `2048` (bump to `3000+` for dense screenshots) |
+| `VISION_TIMEOUT_MS` | optional | `30000` |
+| `VISION_BLOCK_PRIVATE_URLS` | optional | `true` to block localhost fetches |
 
 ---
 
