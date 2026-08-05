@@ -9,7 +9,9 @@
     "mcp-vision-bridge": "dist/index.js"
   },
   "files": [
-    "dist"
+    "dist",
+    "skills",
+    "examples"
   ],
   "engines": {
     "node": ">=18.0.0"
