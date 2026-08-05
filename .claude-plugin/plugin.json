@@ -1,0 +1,32 @@
+{
+  "name": "mcp-vision-bridge",
+  "description": "Give your text-only coding agent (DeepSeek V4 Flash, Qwen, Kimi) vision. Adds an analyze_image MCP tool that routes images through any multimodal model (mimo, Claude, Gemini, GPT-4o) and returns a detailed text description. Includes a vision skill and an auto-loop hook for clipboard screenshots.",
+  "version": "0.1.0",
+  "author": {
+    "name": "KuaaMU",
+    "email": "XCM853629353@gmail.com"
+  },
+  "homepage": "https://github.com/KuaaMU/mcp-vision-bridge",
+  "repository": "https://github.com/KuaaMU/mcp-vision-bridge.git",
+  "license": "MIT",
+  "userConfig": {
+    "vision_openai_base_url": {
+      "type": "string",
+      "title": "Vision endpoint (OpenAI-compatible)",
+      "description": "Your OpenAI-compatible vision endpoint, e.g. https://opencode.ai/zen/go/v1, https://api.openai.com/v1, or an OpenRouter/gateway URL.",
+      "default": "https://api.openai.com/v1"
+    },
+    "vision_openai_api_key": {
+      "type": "string",
+      "title": "Vision API key",
+      "description": "API key for the vision endpoint above.",
+      "sensitive": true
+    },
+    "vision_model": {
+      "type": "string",
+      "title": "Vision model id",
+      "description": "Vision model, e.g. mimo-v2.5, gpt-4o, qwen-vl-max, gemini-2.0-flash.",
+      "default": "mimo-v2.5"
+    }
+  }
+}

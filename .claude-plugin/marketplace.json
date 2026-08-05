@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
+  "name": "mcp-vision-bridge",
+  "version": "0.1.0",
+  "description": "Vision for text-only coding agents: analyze_image MCP tool + vision skill + auto-loop clipboard hook. Bring your own multimodal model (mimo, Claude, Gemini, GPT-4o).",
+  "owner": {
+    "name": "KuaaMU",
+    "email": "XCM853629353@gmail.com"
+  },
+  "plugins": [
+    {
+      "name": "mcp-vision-bridge",
+      "description": "Give your text-only agent eyes: analyze_image tool, vision skill, and auto-loop clipboard hook.",
+      "source": ".",
+      "category": "development"
+    }
+  ]
+}
