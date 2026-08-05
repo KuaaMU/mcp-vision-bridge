@@ -1,16 +1,6 @@
 ---
 name: vision
-description: >
-  Give the agent vision when the model itself is text-only (no image input).
-  Use this skill whenever the user asks you to look at, analyze, describe, read,
-  or OCR any image — a screenshot, a photo, a diagram, a UI, a chart, an error
-  dialog, a pasted picture, or anything visual. Also triggers when the user pastes
-  an image into the chat and you receive an "[Unsupported Image]" placeholder
-  (the model cannot receive image content, so you must obtain the pixels another
-  way and route them through the analyze_image MCP tool). Use the vision MCP tool
-  (analyze_image) to turn any image into text you can reason over. If the
-  analyze_image tool is NOT available, guide the user through installation first
-  (Section A), then use it (Section B).
+description: Give the agent vision when the model itself is text-only (no image input). Use this skill whenever the user asks you to look at, analyze, describe, read, or OCR any image — a screenshot, a photo, a diagram, a UI, a chart, an error dialog, a pasted picture, or anything visual. Also triggers when the user pastes an image and you receive an "[Unsupported Image]" placeholder. Use the vision MCP tool (analyze_image) to turn any image into text you can reason over. If analyze_image is not available, guide the user through installation first (Section A), then use it (Section B).
 ---
 
 # Vision for a text-only agent
