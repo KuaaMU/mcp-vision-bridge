@@ -249,6 +249,16 @@ env = { VISION_OPENAI_BASE_URL = "https://your-gateway/v1", VISION_OPENAI_API_KE
 
 Any other MCP client: register a stdio server running `npx -y mcp-vision-bridge`.
 
+> **For the full experience (auto-loop), use `./install.sh` instead of the manual
+> config above.** Besides registering the MCP server, it also installs:
+> - the **`vision` skill** (teaches the agent when/how to call `analyze_image`), and
+> - (Claude Code) the **auto-loop hook** — when you copy an image and type
+>   "看看这个", the hook snapshots the clipboard to a file and tells your agent
+>   to analyze it automatically.
+>
+> Manual config gives you the tool; `install.sh` gives you the tool **plus**
+> the agent behavior that makes it feel automatic.
+
 ---
 
 ## What the agent sees

@@ -18,10 +18,20 @@ set -euo pipefail
 VISION_SKILL_DIR="${VISION_SKILL_DIR:-skills/vision}"
 CLAUDE_SKILLS_DIR="${CLAUDE_SKILLS_DIR:-$HOME/.claude/skills}"
 
+# Choose the server launch command: prefer a globally-installed binary, else npx.
+if command -v mcp-vision-bridge >/dev/null 2>&1; then
+  MCP_CMD='mcp-vision-bridge'
+  MCP_ARGS=''
+else
+  MCP_CMD='npx'
+  MCP_ARGS='-y mcp-vision-bridge'
+fi
+
 echo "=============================================="
 echo " mcp-vision-bridge installer"
 echo " Give your text-only agent eyes."
 echo "=============================================="
+echo "  server launch: $MCP_CMD $MCP_ARGS"
 
 # ---- 1. Detect platform ----
 detect_platform() {
@@ -52,37 +62,10 @@ if [ -z "$ENDPOINT" ] || [ -z "$API_KEY" ] || [ -z "$MODEL" ]; then
   exit 1
 fi
 
-# ---- 3. Persist API key as env var (not in config files) ----
-persist_env() {
-  local var="VISION_OPENAI_API_KEY"
-  # Windows Git Bash / MSYS
-  if [ -n "${USERPROFILE:-}" ] && [ -f "$USERPROFILE/.bashrc" ]; then
-    if ! grep -q "^export $var=" "$USERPROFILE/.bashrc"; then
-      echo "export $var=\"$API_KEY\"" >> "$USERPROFILE/.bashrc"
-      echo "  → wrote VISION_OPENAI_API_KEY to ~/.bashrc"
-    fi
-  fi
-  if [ -f "$HOME/.bashrc" ] && [ "$HOME/.bashrc" != "${USERPROFILE:-}/.bashrc" ]; then
-    if ! grep -q "^export $var=" "$HOME/.bashrc"; then
-      echo "export $var=\"$API_KEY\"" >> "$HOME/.bashrc"
-      echo "  → wrote VISION_OPENAI_API_KEY to ~/.bashrc"
-    fi
-  fi
-  if [ -f "$HOME/.zshrc" ]; then
-    if ! grep -q "^export $var=" "$HOME/.zshrc"; then
-      echo "export $var=\"$API_KEY\"" >> "$HOME/.zshrc"
-      echo "  → wrote VISION_OPENAI_API_KEY to ~/.zshrc"
-    fi
-  fi
-  if [ -f "$HOME/.profile" ]; then
-    if ! grep -q "^export $var=" "$HOME/.profile"; then
-      echo "export $var=\"$API_KEY\"" >> "$HOME/.profile"
-      echo "  → wrote VISION_OPENAI_API_KEY to ~/.profile"
-    fi
-  fi
-}
-persist_env
-echo "  → VISION_OPENAI_API_KEY stored as an environment variable (not in config files)."
+# ---- 3. The API key lives ONLY in the MCP server config env (below) — not in
+# the shell profile. That keeps it scoped to the vision MCP process, avoids
+# duplicate/conflicting definitions, and stays consistent across shells.
+echo "  → VISION_OPENAI_API_KEY will be stored in the MCP server config (env), not the shell profile."
 
 # ---- 4. Register the MCP server ----
 case "$PLATFORM" in
@@ -93,15 +76,14 @@ case "$PLATFORM" in
         const fs = require("fs");
         const p = process.argv[1];
         const ep = process.argv[2], key = process.argv[3], model = process.argv[4];
+        const cmd = process.argv[5], argsStr = process.argv[6];
         const j = JSON.parse(fs.readFileSync(p, "utf8"));
         j.mcpServers = j.mcpServers || {};
-        j.mcpServers.vision = {
-          command: "npx", args: ["-y", "mcp-vision-bridge"],
-          env: { VISION_OPENAI_BASE_URL: ep, VISION_OPENAI_API_KEY: key, VISION_MODEL: model }
-        };
+        const args = argsStr ? argsStr.split(" ") : [];
+        j.mcpServers.vision = { command: cmd, args, env: { VISION_OPENAI_BASE_URL: ep, VISION_OPENAI_API_KEY: key, VISION_MODEL: model } };
         fs.writeFileSync(p, JSON.stringify(j, null, 2));
         console.log("  → registered vision MCP in ~/.claude.json");
-      ' "$CLAUDE_JSON" "$ENDPOINT" "$API_KEY" "$MODEL"
+      ' "$CLAUDE_JSON" "$ENDPOINT" "$API_KEY" "$MODEL" "$MCP_CMD" "$MCP_ARGS"
     else
       echo "  → ~/.claude.json not found; register manually (see examples/claude-code.mcp.json)."
     fi
@@ -112,8 +94,10 @@ case "$PLATFORM" in
     {
       echo ""
       echo "[mcp_servers.vision]"
-      echo 'command = "npx"'
-      echo 'args = ["-y", "mcp-vision-bridge"]'
+      echo "command = \"$MCP_CMD\""
+      if [ -n "$MCP_ARGS" ]; then
+        echo "args = [$MCP_ARGS]" | sed 's/mcp-vision-bridge/"mcp-vision-bridge"/g; s/-y/"-y"/g'
+      fi
       echo "env = { VISION_OPENAI_BASE_URL = \"$ENDPOINT\", VISION_OPENAI_API_KEY = \"$API_KEY\", VISION_MODEL = \"$MODEL\" }"
     } >> "$CODEX_CONFIG"
     echo "  → registered vision MCP in ~/.codex/config.toml"
@@ -125,14 +109,16 @@ case "$PLATFORM" in
       const fs = require("fs");
       const p = process.argv[1];
       const ep = process.argv[2], key = process.argv[3], model = process.argv[4];
+      const cmd = process.argv[5], argsStr = process.argv[6];
       let j = {};
       try { j = JSON.parse(fs.readFileSync(p, "utf8")); } catch {}
       j.mcp = j.mcp || {};
-      j.mcp.vision = { type: "local", command: ["npx", "-y", "mcp-vision-bridge"],
+      const args = argsStr ? argsStr.split(" ") : [];
+      j.mcp.vision = { type: "local", command: [cmd, ...args],
         environment: { VISION_OPENAI_BASE_URL: ep, VISION_OPENAI_API_KEY: key, VISION_MODEL: model } };
       fs.writeFileSync(p, JSON.stringify(j, null, 2));
       console.log("  → registered vision MCP in ~/.config/opencode/opencode.json");
-    ' "$OPENCODE_CONFIG" "$ENDPOINT" "$API_KEY" "$MODEL"
+    ' "$OPENCODE_CONFIG" "$ENDPOINT" "$API_KEY" "$MODEL" "$MCP_CMD" "$MCP_ARGS"
     ;;
   kimi)
     KIMI_JSON="$HOME/.kimi/mcp.json"
@@ -141,21 +127,24 @@ case "$PLATFORM" in
       const fs = require("fs");
       const p = process.argv[1];
       const ep = process.argv[2], key = process.argv[3], model = process.argv[4];
-      const j = { mcpServers: { vision: { command: "npx", args: ["-y", "mcp-vision-bridge"],
-        env: { VISION_OPENAI_BASE_URL: ep, VISION_OPENAI_API_KEY: key, VISION_MODEL: model } } } };
+      const cmd = process.argv[5], argsStr = process.argv[6];
+      const args = argsStr ? argsStr.split(" ") : [];
+      const j = { mcpServers: { vision: { command: cmd, args, env: { VISION_OPENAI_BASE_URL: ep, VISION_OPENAI_API_KEY: key, VISION_MODEL: model } } } };
       fs.writeFileSync(p, JSON.stringify(j, null, 2));
       console.log("  → registered vision MCP in ~/.kimi/mcp.json");
-    ' "$KIMI_JSON" "$ENDPOINT" "$API_KEY" "$MODEL"
+    ' "$KIMI_JSON" "$ENDPOINT" "$API_KEY" "$MODEL" "$MCP_CMD" "$MCP_ARGS"
     ;;
 esac
 
-# ---- 5. Copy the vision skill ----
-if [ -d "$VISION_SKILL_DIR" ]; then
-  mkdir -p "$CLAUDE_SKILLS_DIR"
-  cp -r "$VISION_SKILL_DIR" "$CLAUDE_SKILLS_DIR/vision"
-  echo "  → installed vision skill to $CLAUDE_SKILLS_DIR/vision"
-else
-  echo "  → skill dir '$VISION_SKILL_DIR' not found; copy skills/vision manually."
+# ---- 5. Copy the vision skill (Claude Code only; the skill lives in ~/.claude) ----
+if [ "$PLATFORM" = "claude" ]; then
+  if [ -d "$VISION_SKILL_DIR" ]; then
+    mkdir -p "$CLAUDE_SKILLS_DIR"
+    cp -r "$VISION_SKILL_DIR" "$CLAUDE_SKILLS_DIR/vision"
+    echo "  → installed vision skill to $CLAUDE_SKILLS_DIR/vision"
+  else
+    echo "  → skill dir '$VISION_SKILL_DIR' not found; copy skills/vision manually."
+  fi
 fi
 
 # ---- 5b. Auto-loop hook (Claude Code only) ----
