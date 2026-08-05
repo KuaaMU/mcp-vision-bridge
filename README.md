@@ -1,82 +1,86 @@
-# llm-vision-mcp
+<div align="center">
 
-**Vision for text-only LLM coding agents.**
+# 👁️ llm-vision-mcp
 
-`llm-vision-mcp` is a Model Context Protocol (MCP) server that gives pure-text
-large language models (DeepSeek, Qwen, Kimi, and any other text-only agent)
-the ability to **see** — by routing images to a multimodal model of your choice
-and returning a detailed, standalone text description the agent can reason over.
+**Give your text-only coding agent eyes.**
 
-The server itself is **not** a vision model. It resolves image sources, sends
-the pixels to a vision model (mimo, Claude, Gemini, or any OpenAI-compatible
-endpoint), and engineers the prompt so the returned text is exhaustive enough
-for a text-only agent to act on without ever seeing the image.
+DeepSeek V4 Flash can write beautiful code — but it can't *see* the error dialog, the broken UI, or the traceback screenshot you just pasted.
 
-> Why: DeepSeek V4 Flash and friends are superb at coding but have no eyes.
-> Point them at this MCP and they can read error dialogs, inspect UI
-> screenshots, OCR terminals, and understand diagrams.
+`llm-vision-mcp` fixes that. It's a one-tool [MCP](https://modelcontextprotocol.io) server that turns **any image** into a **detailed, standalone text description** your text-only LLM can reason over — powered by the multimodal model of *your* choice.
+
+Works with **Claude Code · opencode · Codex · Kimi Code · PI · Cursor** and any MCP client.
+
+<br>
+
+`npx -y llm-vision-mcp` → 60 seconds to working vision.
+
+</div>
+
+---
+
+## Why you need this
+
+**DeepSeek V4 Flash (0731)** is topping every coding benchmark — and it has **no eyes**. Neither does the upcoming **DeepSeek V4 Pro**. The same goes for most open-weight coding models.
+
+You paste a screenshot. The agent says *"I can't see images."* You transcribe the error by hand. Ugh.
+
+With `llm-vision-mcp` the agent just calls one tool:
+
+> `analyze_image(image="./screenshot.png", prompt="What error is on screen?")`
+>
+> → *"❌ `ModuleNotFoundError: No module named 'cannx'` — appears in terminal output on line 3 of the traceback…"*
+
+The image never reaches the agent. A complete text description does. The agent can now debug, fix, and explain — eyes closed, context open.
+
+> **Is it a vision model?** No — and that's the point. The MCP routes pixels to whatever multimodal model you already pay for (mimo, Claude, Gemini, GPT-4o, Qwen-VL…) and engineers the prompt so the description is exhaustive enough to stand alone.
 
 ---
 
 ## Features
 
-- **One tool, all sources** — `analyze_image` accepts a local file path, http(s)
-  URL, base64 data URI, the system **clipboard**, or raw bytes.
-- **Provider-agnostic** — adapters for OpenAI-compatible (OpenRouter, Chinese
-  gateways, opencode GO / mimo, local emulators), Anthropic, and Google Gemini.
-- **Exhaustive by default** — a "max-descriptive" system prompt pushes the
-  vision model to return complete, verbatim, standalone text.
-- **Task presets** — `describe` | `ocr` | `ui` | `layout` | `qa`, or pass a
-  free-form `prompt`.
-- **Context-friendly** — `save_to` writes long descriptions to a file and
-  returns a path + summary instead of a giant blob.
-- **Cached** — in-memory LRU + optional on-disk sidecar so re-analysis doesn't
-  re-download.
-- **SSRF guard** — optional private-address blocking for URL sources.
-- **Works with any MCP client** — Claude Code, PI, Codex, Kimi Code, opencode,
-  Cursor, and more.
+- **One tool, every image source** — local path, http(s) URL, base64 `data:` URI, the system **clipboard**, or raw bytes. No image server, no upload, no setup.
+- **Bring your own vision model** — OpenAI-compatible (OpenRouter, DeepSeek/Volcengine/OpenCode gateways, local emulators), Anthropic, Google Gemini. Swap by changing one env var.
+- **Exhaustive by default** — a "max-descriptive" system prompt makes the vision model enumerate every element, quote text *verbatim*, and flag anything anomalous. Pure-text agents get everything they need in one call.
+- **5 task presets** — `describe` · `ocr` · `ui` · `layout` · `qa`, or ask anything with a free-form `prompt`.
+- **Context-friendly** — `save_to` writes long descriptions to a file and returns a path + summary, so your agent's context window stays small.
+- **Cached & safe** — in-memory + optional disk cache; optional SSRF guard for URL sources; API keys live in env, never in tool args.
 
 ---
 
-## Quick start
+## Quick start (60 seconds)
 
 ### 1. Install
 
 ```bash
-npm install -g llm-vision-mcp
-# or run directly without installing:
-# npx -y llm-vision-mcp
+npm install -g llm-vision-mcp        # global install
+npx -y llm-vision-mcp                # or run without installing
 ```
 
-Requires Node.js ≥ 18.
+Requires **Node.js ≥ 18**.
 
-### 2. Configure a provider
+### 2. Point it at your vision model
 
-All configuration is via **environment variables**. Keys never appear in tool
-arguments, so a prompt-injected agent cannot read them.
+Everything is configured by **environment variables** — the MCP reads them from the agent's server config, so you only ever set them once. Keys never appear in tool arguments.
 
-| Variable | Required | Default | Purpose |
-|---|---|---|---|
-| `VISION_PROVIDER` | no | `openai` | `openai` \| `anthropic` \| `gemini` |
-| `VISION_MODEL` | no | `mimo-v2.5` | Model id passed to the provider |
-| `VISION_OPENAI_API_KEY` | yes* | — | Key for the OpenAI-compatible endpoint |
-| `VISION_OPENAI_BASE_URL` | no | `https://api.openai.com/v1` | Base URL (OpenRouter / gateway / opencode GO) |
-| `VISION_ANTHROPIC_API_KEY` | yes* | — | Anthropic key |
-| `VISION_ANTHROPIC_BASE_URL` | no | `https://api.anthropic.com` | Anthropic base |
-| `VISION_GEMINI_API_KEY` | yes* | — | Google AI Studio key |
-| `VISION_GEMINI_BASE_URL` | no | `https://generativelanguage.googleapis.com` | Gemini base |
-| `VISION_MAX_TOKENS` | no | `2048` | Vision model output cap |
-| `VISION_TIMEOUT_MS` | no | `60000` | Fetch + provider timeout |
-| `VISION_CACHE_DIR` | no | (memory only) | On-disk image cache dir |
-| `VISION_BLOCK_PRIVATE_URLS` | no | `false` | `true` blocks localhost/private URL fetches |
+**OpenAI-compatible** (OpenRouter · OpenCode GO · any gateway · **mimo v2.5**) — the default:
 
-\* Required only when that provider is selected.
+| Variable | Purpose |
+|---|---|
+| `VISION_OPENAI_BASE_URL` | Your endpoint, e.g. `https://opencode.ai/zen/go/v1` or `https://api.openai.com/v1` |
+| `VISION_OPENAI_API_KEY` | Your API key |
+| `VISION_MODEL` | e.g. `mimo-v2.5`, `gpt-4o`, `qwen-vl-max` |
 
-### 3. Register the server
+**Anthropic** (`VISION_PROVIDER=anthropic`): `VISION_ANTHROPIC_API_KEY` + `VISION_MODEL=claude-sonnet-4-5`
+**Gemini** (`VISION_PROVIDER=gemini`): `VISION_GEMINI_API_KEY` + `VISION_MODEL=gemini-2.0-flash`
+
+Full variable table [below](#configuration-reference).
+
+### 3. Register with your agent
+
+Pick your platform. The agent immediately gains `analyze_image`.
 
 <details>
-<summary><b>Claude Code</b> — add to <code>.mcp.json</code> or run
-<code>claude mcp add</code></summary>
+<summary><b>Claude Code</b> — <code>.mcp.json</code> or <code>claude mcp add</code></summary>
 
 ```json
 {
@@ -85,21 +89,20 @@ arguments, so a prompt-injected agent cannot read them.
       "command": "npx",
       "args": ["-y", "llm-vision-mcp"],
       "env": {
-        "VISION_PROVIDER": "openai",
-        "VISION_OPENAI_BASE_URL": "https://api.openai.com/v1",
+        "VISION_OPENAI_BASE_URL": "https://opencode.ai/zen/go/v1",
         "VISION_OPENAI_API_KEY": "sk-...",
-        "VISION_MODEL": "gpt-4o"
+        "VISION_MODEL": "mimo-v2.5"
       }
     }
   }
 }
 ```
 
-Or the CLI: `claude mcp add vision -- npx -y llm-vision-mcp`
+Or: `claude mcp add vision -- npx -y llm-vision-mcp`
 </details>
 
 <details>
-<summary><b>opencode</b> — add to <code>opencode.json</code></summary>
+<summary><b>opencode</b> — <code>opencode.json</code></summary>
 
 ```json
 {
@@ -108,18 +111,14 @@ Or the CLI: `claude mcp add vision -- npx -y llm-vision-mcp`
       "type": "local",
       "command": ["npx", "-y", "llm-vision-mcp"],
       "environment": {
-        "VISION_PROVIDER": "openai",
-        "VISION_OPENAI_BASE_URL": "https://api.openai.com/v1",
+        "VISION_OPENAI_BASE_URL": "https://opencode.ai/zen/go/v1",
         "VISION_OPENAI_API_KEY": "sk-...",
-        "VISION_MODEL": "gpt-4o"
+        "VISION_MODEL": "mimo-v2.5"
       }
     }
   }
 }
 ```
-
-> Using opencode GO with mimo v2.5? Point `VISION_OPENAI_BASE_URL` at your GO
-> gateway and set `VISION_MODEL=mimo-v2.5`.
 </details>
 
 <details>
@@ -129,7 +128,7 @@ Or the CLI: `claude mcp add vision -- npx -y llm-vision-mcp`
 [mcp_servers.vision]
 command = "npx"
 args = ["-y", "llm-vision-mcp"]
-env = { VISION_PROVIDER = "openai", VISION_OPENAI_API_KEY = "sk-...", VISION_MODEL = "gpt-4o" }
+env = { VISION_OPENAI_BASE_URL = "https://opencode.ai/zen/go/v1", VISION_OPENAI_API_KEY = "sk-...", VISION_MODEL = "mimo-v2.5" }
 ```
 </details>
 
@@ -143,9 +142,9 @@ env = { VISION_PROVIDER = "openai", VISION_OPENAI_API_KEY = "sk-...", VISION_MOD
       "command": "npx",
       "args": ["-y", "llm-vision-mcp"],
       "env": {
-        "VISION_PROVIDER": "openai",
+        "VISION_OPENAI_BASE_URL": "https://opencode.ai/zen/go/v1",
         "VISION_OPENAI_API_KEY": "sk-...",
-        "VISION_MODEL": "gpt-4o"
+        "VISION_MODEL": "mimo-v2.5"
       }
     }
   }
@@ -156,91 +155,122 @@ env = { VISION_PROVIDER = "openai", VISION_OPENAI_API_KEY = "sk-...", VISION_MOD
 <details>
 <summary><b>PI (Pear AI / Codespaces)</b> — MCP config</summary>
 
-Add the server to your PI agent's MCP configuration, e.g.:
-
 ```json
 {
   "mcpServers": {
     "vision": {
       "command": "npx",
       "args": ["-y", "llm-vision-mcp"],
-      "env": { "VISION_OPENAI_API_KEY": "sk-...", "VISION_MODEL": "gpt-4o" }
+      "env": {
+        "VISION_OPENAI_BASE_URL": "https://opencode.ai/zen/go/v1",
+        "VISION_OPENAI_API_KEY": "sk-...",
+        "VISION_MODEL": "mimo-v2.5"
+      }
     }
   }
 }
 ```
 </details>
 
-Any other MCP client works the same way: register a stdio server running
-`npx -y llm-vision-mcp`.
+Any other MCP client: register a stdio server running `npx -y llm-vision-mcp`.
 
 ---
 
-## Usage
+## What the agent sees
 
-Once registered, the agent sees one tool:
+One tool, with a clear contract the agent can discover:
 
-### `analyze_image`
-
-```jsonc
-{
-  "image": "clipboard",                 // path | URL | data: URI | "clipboard" | "raw"
-  "prompt": "What error is on screen?",  // optional free-form question
-  "task": "describe",                    // optional: describe|ocr|ui|layout|qa
-  "detail": "high",                      // optional: low|high (default high)
-  "save_to": "out/analysis.md"           // optional: write full text to file
-}
+```
+analyze_image(
+  image     string   // path | URL | data: URI | "clipboard" | "raw"
+  prompt?   string   // "What error is on screen?"
+  task?     describe | ocr | ui | layout | qa
+  detail?   low | high            // default high
+  save_to?  string                // write full text to a file
+)
 ```
 
-- `image` — one of:
-  - a **local path** (`./screenshots/bug.png`, `C:\shots\ui.png`)
-  - an **http(s) URL** (`https://example.com/diagram.png`, `http://localhost:5173/snap.png`)
-  - a **base64 data URI** (`data:image/png;base64,iVBOR...`)
-  - the literal **`"clipboard"`** → reads the image currently copied to the system clipboard
-  - the literal **`"raw"`** → the string itself is raw image bytes (base64 or binary string)
-- `prompt` — your question; overrides `task`.
-- `task` — quick presets that fill in a detailed instruction:
-  - `describe` — complete, exhaustive description
-  - `ocr` — extract all text verbatim
-  - `ui` — functional UI spec (components, labels, states, layout)
-  - `layout` — spatial structure, alignment, z-order
-  - `qa` — answer your `prompt` grounded in the image
-- `detail` — `high` (default) for maximum completeness, `low` to cap output
-- `save_to` — write the full description to a file and return a path + 2000-char
-  summary. Use this for long outputs so the agent's context stays small.
+**Every `image` source, zero friction:**
+- **Local path** — `./screenshots/bug.png`, `C:\shots\ui.png`
+- **http(s) URL** — `https://example.com/diagram.png`, `http://localhost:5173/snap.png`
+- **data URI** — `data:image/png;base64,iVBOR...`
+- **`"clipboard"`** — analyze whatever screenshot you just copied. That's it.
+- **`"raw"`** — the string *is* the image bytes.
 
-The response is **plain text** — a detailed, standalone description. The vision
-model is instructed to enumerate every element, quote all visible text verbatim,
-report layout/colors/states, and flag anything anomalous.
+The response is **plain text**, engineered to be exhaustive: every element, all text *verbatim*, spatial layout, colors, states, anomalies — and an explicit *"I can't read this part"* when it can't. Your text-only agent acts on it like it saw the image.
 
 ---
 
-## Provider examples
+## Real results (mimo-v2.5, no cherry-picking)
 
-### OpenAI-compatible (default) — OpenRouter / gateway / opencode GO
+`llm-vision-mcp` + `mimo-v2.5` in action. One `describe` / `ocr` call each.
 
-```bash
-export VISION_PROVIDER=openai
-export VISION_OPENAI_BASE_URL=https://openrouter.ai/api/v1   # or your gateway
-export VISION_OPENAI_API_KEY=sk-or-...
-export VISION_MODEL=openai/gpt-4o                             # or mimo-v2.5
+### 1 · Terminal / error analysis → `describe`
+
+> **Input:** a Windows PowerShell prompt with a compile error highlighted.
+> **Output:**
+> ```
+> The image is a Windows PowerShell terminal. The prompt shows:
+>   PS C:\Users\dev> cargo build
+>   error[E0277]: the trait bound `Foo: Bar` is not satisfied
+>   ...
+> ```
+
+### 2 · Screenshot OCR → `ocr`
+
+> **Input:** a full-screen Notepad screenshot (Chinese CV text, menus, title bar).
+> **Output:** every line reproduced **verbatim**, including the menu bar
+> `文件(F) 编辑(E) 格式(O) 查看(V) 帮助(H)` and the entire body text, in reading order.
+
+### 3 · Character / asset analysis → `describe`
+
+> **Input:** a cartoon character with a raised glass.
+> **Output:** full breakdown — white fur, black outlines, red collar with gold tag,
+> champagne flute with bubbles, and the tiny watermark `萌图屋 · qq.335395.com` read out.
+
+### 4 · Document/photo understanding → `describe`
+
+> **Input:** a photo of an ID card on striped fabric.
+> **Output:** card type, national emblem, Chinese text, issuing authority and
+> validity dates read exactly, plus a note on the glare partially obscuring the design.
+
+All four ran through the **same `analyze_image` tool**, same system prompt, zero prompt-tuning. Try it on your own screenshots — the clipboard source makes it a one-word ask: *"analyze clipboard"*.
+
+---
+
+## Configuration reference
+
+| Variable | Required | Default | Purpose |
+|---|---|---|---|
+| `VISION_PROVIDER` | — | `openai` | `openai` \| `anthropic` \| `gemini` |
+| `VISION_MODEL` | — | `mimo-v2.5` | Model id passed to the provider |
+| `VISION_OPENAI_BASE_URL` | — | `https://api.openai.com/v1` | OpenAI-compatible base (OpenRouter / gateway / opencode GO) |
+| `VISION_OPENAI_API_KEY` | yes* | — | Key for the OpenAI-compatible endpoint |
+| `VISION_ANTHROPIC_BASE_URL` | — | `https://api.anthropic.com` | Anthropic base |
+| `VISION_ANTHROPIC_API_KEY` | yes* | — | Anthropic key |
+| `VISION_GEMINI_BASE_URL` | — | `https://generativelanguage.googleapis.com` | Gemini base |
+| `VISION_GEMINI_API_KEY` | yes* | — | Google AI Studio key |
+| `VISION_MAX_TOKENS` | — | `2048` | Vision output cap (complex screenshots → 3000+) |
+| `VISION_TIMEOUT_MS` | — | `60000` | Fetch + provider timeout |
+| `VISION_CACHE_DIR` | — | (memory only) | On-disk image cache dir |
+| `VISION_BLOCK_PRIVATE_URLS` | — | `false` | `true` blocks localhost/private URL fetches |
+
+\* Required only when that provider is selected.
+
+---
+
+## How it works
+
+```
+text-only agent ──▶ analyze_image ──▶ [resolve image bytes] ──▶ [vision model]
+   (DeepSeek V4,                                                    (mimo / Claude /
+    Qwen, Kimi …)                                                     Gemini / GPT-4o)
+        ◀────────────── exhaustive text description ◀──────────────
 ```
 
-### Anthropic
-
-```bash
-export VISION_PROVIDER=anthropic
-export VISION_ANTHROPIC_API_KEY=sk-ant-...
-export VISION_MODEL=claude-sonnet-4-5
-```
-
-### Google Gemini
-
-```bash
-export VISION_PROVIDER=gemini
-export VISION_GEMINI_API_KEY=AIza...
-export VISION_MODEL=gemini-2.0-flash
-```
+The server **never sees** what the image means — it resolves the source, sends
+pixels to your vision model, and returns the text. Pure text in, pure text out.
+No images in your agent's context window.
 
 ---
 
@@ -249,7 +279,7 @@ export VISION_MODEL=gemini-2.0-flash
 ```bash
 npm install
 npm run build          # tsc → dist/
-npm test               # unit + integration (vitest)
+npm test               # 55 unit + integration tests (vitest)
 npm run test:e2e       # full stdio pipeline against a mock provider
 ```
 
@@ -278,19 +308,28 @@ src/
   index.ts             # McpServer wiring + stdio transport
 scripts/
   e2e-smoke.mjs        # end-to-end smoke test
+  live-smoke.mjs       # real-endpoint smoke (env-driven key, never committed)
 ```
 
 ---
 
-## Security notes
+## Security
 
 - **Keys live in env only.** Provider API keys are never accepted as tool
-  arguments, so they cannot be exfiltrated via prompt injection.
-- **SSRF guard** — set `VISION_BLOCK_PRIVATE_URLS=true` to prevent URL-based
-  fetches to localhost/private ranges.
-- **Local-first** — the server reads only the files you point it at and sends
-  image bytes to your configured provider.
+  arguments, so they can't be exfiltrated via prompt injection.
+- **SSRF guard** — `VISION_BLOCK_PRIVATE_URLS=true` blocks localhost/private fetches.
+- **Local-first** — the server reads only the files you point at it.
 
 ## License
 
 [MIT](LICENSE)
+
+---
+
+<div align="center">
+
+**DeepSeek writes the code. `llm-vision-mcp` reads the screen.**
+
+[GitHub](https://github.com/KuaaMU/llm-vision-mcp) · [Issues](https://github.com/KuaaMU/llm-vision-mcp/issues) · ⭐ Star it if it's useful
+
+</div>
