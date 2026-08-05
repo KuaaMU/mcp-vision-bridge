@@ -48,6 +48,45 @@ function localAppDataDir(): string {
   return path.join(home, ".local", "share");
 }
 
+/** AppData on Windows, else ~/.config (XDG config home). */
+function appDataDir(): string {
+  if (process.env.APPDATA) return process.env.APPDATA;
+  const home = homeDir();
+  return path.join(home, ".config");
+}
+
+/**
+ * Scan Reasonix pasted images. Reasonix is a DeepSeek-native terminal agent:
+ * pasted images are written to `.reasonix/attachments/` (project-relative) and
+ * sessions live under `~/.reasonix/sessions/` (or `%APPDATA%\reasonix\sessions\`
+ * on Windows, or `REASONIX_STATE_HOME`). We scan the state-home sessions dir and
+ * any `.reasonix` dirs in the current working directory tree.
+ */
+async function scanReasonix(limit: number): Promise<DiscoveredImage[]> {
+  const out: DiscoveredImage[] = [];
+  const roots: string[] = [];
+
+  // 1. Sessions under the state home (or its default).
+  const stateHome = process.env.REASONIX_STATE_HOME;
+  if (stateHome) {
+    roots.push(path.join(stateHome, "sessions"));
+  } else {
+    roots.push(path.join(homeDir(), ".reasonix", "sessions"));
+    roots.push(path.join(appDataDir(), "reasonix", "sessions"));
+  }
+
+  // 2. Attachments in the current project tree (`.reasonix/attachments`).
+  const cwd = process.cwd();
+  for (let dir = cwd; dir && dir.length > 3; dir = path.dirname(dir)) {
+    roots.push(path.join(dir, ".reasonix"));
+  }
+
+  for (const root of roots) {
+    out.push(...(await scanDirForImages(root, "reasonix", limit)));
+  }
+  return out;
+}
+
 /** Scan a directory tree for image files, newest first. */
 async function scanDirForImages(
   root: string,
@@ -228,6 +267,9 @@ export async function findRecentImages(
   // 3. Grok Build session images: ~/.grok/sessions/*/*/images/
   const grokRoot = path.join(home, ".grok", "sessions");
   all.push(...(await scanDirForImages(grokRoot, "grok", limit)));
+
+  // 4. Reasonix (DeepSeek-native terminal agent): sessions + project attachments.
+  all.push(...(await scanReasonix(limit)));
 
   // 5. Claude Code CLI pasted-image cache: ~/.claude/image-cache/<uuid>/N.png.
   //    This is where the CLI/TUI actually writes pasted images (both Ctrl+V and

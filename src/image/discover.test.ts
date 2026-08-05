@@ -109,4 +109,24 @@ describe("findRecentImages", () => {
       await fs.rm(home, { recursive: true, force: true });
     }
   });
+
+  it("discovers Reasonix pasted images from REASONIX_STATE_HOME/sessions", async () => {
+    const tmp = await fs.mkdtemp(path.join(os.tmpdir(), "reasonix-"));
+    const prev = process.env.REASONIX_STATE_HOME;
+    process.env.REASONIX_STATE_HOME = tmp;
+    try {
+      const sess = path.join(tmp, "sessions", "abc123");
+      await fs.mkdir(sess, { recursive: true });
+      await fs.writeFile(path.join(sess, "img-1.png"), pngFixture());
+      await fs.writeFile(path.join(sess, "readme.txt"), "not an image");
+      const images = await findRecentImages({ limit: 10, includeClaudeTranscript: false });
+      const rx = images.filter((i) => i.source.startsWith("reasonix:"));
+      expect(rx.length).toBe(1);
+      expect(rx[0].filePath?.endsWith("img-1.png")).toBe(true);
+    } finally {
+      if (prev === undefined) delete process.env.REASONIX_STATE_HOME;
+      else process.env.REASONIX_STATE_HOME = prev;
+      await fs.rm(tmp, { recursive: true, force: true });
+    }
+  });
 });
