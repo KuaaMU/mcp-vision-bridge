@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { clipboardReader } from "./clipboard.js";
-import { pngFixture } from "../__fixtures__/images.js";
+import { clipboardReader, interpretClipboardStdout } from "./clipboard.js";
+import { pngFixture, textFixture } from "../__fixtures__/images.js";
 
 describe("clipboardReader", () => {
   it("returns powershell on Windows", () => {
@@ -20,6 +20,27 @@ describe("clipboardReader", () => {
 
   it("returns undefined on unsupported platforms", () => {
     expect(clipboardReader("freebsd")).toBeUndefined();
+  });
+});
+
+describe("interpretClipboardStdout", () => {
+  it("returns null for empty output", () => {
+    expect(interpretClipboardStdout(Buffer.alloc(0))).toBeNull();
+  });
+
+  it("returns null for whitespace-only output (PowerShell \r\n / \n / space)", () => {
+    expect(interpretClipboardStdout(Buffer.from("\r\n"))).toBeNull();
+    expect(interpretClipboardStdout(Buffer.from("\n"))).toBeNull();
+    expect(interpretClipboardStdout(Buffer.from(" "))).toBeNull();
+  });
+
+  it("returns null when the clipboard holds non-image content (text)", () => {
+    expect(interpretClipboardStdout(textFixture())).toBeNull();
+  });
+
+  it("returns the bytes for a real image", () => {
+    const png = pngFixture();
+    expect(interpretClipboardStdout(png)).toEqual(png);
   });
 });
 

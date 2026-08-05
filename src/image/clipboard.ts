@@ -17,6 +17,7 @@ import { promises as fs } from "node:fs";
 import * as path from "node:path";
 import { promisify } from "node:util";
 import { clipboardError } from "../errors.js";
+import { detectMime } from "./mime.js";
 
 const execFileP = promisify(execFile);
 
@@ -72,15 +73,16 @@ export async function readClipboardImage(
       maxBuffer: MAX_CLIPBOARD_BYTES,
     });
 
-    if (stdout.length === 0) {
+    const bytes = interpretClipboardStdout(stdout);
+    if (bytes === null) {
       return null;
     }
 
-    if (platform === "darwin" && stdout.length > 0) {
-      return await macClipboardToPng(stdout, config.clipboardDir);
+    if (platform === "darwin") {
+      return await macClipboardToPng(bytes, config.clipboardDir);
     }
 
-    return stdout;
+    return bytes;
   } catch (err) {
     // No image on the clipboard typically fails the command (Windows: a
     // non-zero exit when -ErrorAction SilentlyContinue yields nothing).
@@ -98,6 +100,23 @@ export async function readClipboardImage(
         "If no image is copied, pass an image_path/image_url/image_data instead.",
     );
   }
+}
+
+/**
+ * Decide whether clipboard stdout actually holds an image.
+ *
+ * Returns null (no usable image) for empty, whitespace-only, or non-raster
+ * output — PowerShell can emit \r\n / \n / spaces when the clipboard has no
+ * image object, and text or other content is not a usable image either.
+ */
+export function interpretClipboardStdout(stdout: Buffer): Buffer | null {
+  if (stdout.length === 0 || stdout.toString("utf8").trim().length === 0) {
+    return null;
+  }
+  if (detectMime(stdout) === undefined) {
+    return null;
+  }
+  return stdout;
 }
 
 /** macOS only: re-encode clipboard bytes to PNG via `sips`. */
