@@ -129,4 +129,40 @@ describe("findRecentImages", () => {
       await fs.rm(tmp, { recursive: true, force: true });
     }
   });
+
+  it("discovers opencode pasted images from its SQLite part table (node:sqlite)", async () => {
+    let DatabaseSync;
+    try {
+      ({ DatabaseSync } = await import("node:sqlite"));
+    } catch {
+      return; // Node < 22.5 — skip
+    }
+    // Point HOME at a temp dir so scanOpencode's ~/.local/share/opencode is ours.
+    const tmp = await fs.mkdtemp(path.join(os.tmpdir(), "opencode-"));
+    const prevHome = process.env.USERPROFILE ?? process.env.HOME;
+    const restore = () => {
+      if (prevHome) { process.env.USERPROFILE = prevHome; process.env.HOME = prevHome; }
+      else { delete process.env.USERPROFILE; delete process.env.HOME; }
+    };
+    process.env.USERPROFILE = tmp;
+    process.env.HOME = tmp;
+    try {
+      const dbDir = path.join(tmp, ".local", "share", "opencode");
+      await fs.mkdir(dbDir, { recursive: true });
+      const db = new DatabaseSync(path.join(dbDir, "opencode.db"));
+      db.exec(`CREATE TABLE part (id TEXT, message_id TEXT, session_id TEXT, time_created INTEGER, time_updated INTEGER, data TEXT)`);
+      db.prepare(`INSERT INTO part VALUES (?, ?, ?, ?, ?, ?)`).run(
+        "p1", "m1", "s1", Date.now(), Date.now(),
+        JSON.stringify({ type: "file", mime: "image/png", filename: "clipboard", url: `data:image/png;base64,${pngFixture().toString("base64")}` }),
+      );
+      db.close();
+      const images = await findRecentImages({ limit: 10, includeClaudeTranscript: false });
+      const oc = images.filter((i) => i.source.startsWith("opencode:"));
+      expect(oc.length).toBe(1);
+      expect(oc[0].bytes?.equals(pngFixture())).toBe(true);
+    } finally {
+      restore();
+      await fs.rm(tmp, { recursive: true, force: true });
+    }
+  });
 });

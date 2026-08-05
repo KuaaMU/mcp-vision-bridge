@@ -239,6 +239,74 @@ async function findRecentTranscripts(limit: number): Promise<string[]> {
   return byTime.sort((a, b) => b.m - a.m).slice(0, limit).map((x) => x.t);
 }
 
+/**
+ * Scan opencode pasted images. opencode stores pasted images as base64
+ * `data:image/...` URLs in its SQLite `part` table (no files on disk), at
+ * `~/.local/share/opencode/opencode.db` (or `%LOCALAPPDATA%\opencode\opencode.db`
+ * on Windows). Requires `node:sqlite` (Node ≥ 22.5); on older Node this is a
+ * no-op so the rest of discovery still works.
+ */
+async function scanOpencode(limit: number): Promise<DiscoveredImage[]> {
+  // opencode data dir: `~/.local/share/opencode` (XDG) on all platforms,
+  // including Windows (it does NOT use %LOCALAPPDATA%). Fall back to
+  // LOCALAPPDATA for older builds.
+  const candidates = [
+    path.join(homeDir(), ".local", "share", "opencode", "opencode.db"),
+    path.join(localAppDataDir(), "opencode", "opencode.db"),
+  ];
+  let dbPath = "";
+  for (const c of candidates) {
+    try {
+      await fs.access(c);
+      dbPath = c;
+      break;
+    } catch {
+      /* try next */
+    }
+  }
+  if (!dbPath) return [];
+  try {
+    const { DatabaseSync } = await import("node:sqlite");
+    const db = new DatabaseSync(dbPath, { readOnly: true });
+    try {
+      // Newest file parts first; decode the base64 data:image URL into bytes.
+      const stmt = db.prepare(
+        `SELECT time_created, data FROM part
+         WHERE data LIKE '%"type":"file"%' AND data LIKE '%data:image/%'
+         ORDER BY time_created DESC LIMIT ?`,
+      );
+      const rows = stmt.all(limit * 2) as Array<{ time_created: number; data: string }>;
+      const out: DiscoveredImage[] = [];
+      for (const row of rows) {
+        try {
+          const part = JSON.parse(row.data);
+          if (part?.type !== "file") continue;
+          const url = typeof part.url === "string" ? part.url : "";
+          const m = /^data:(image\/[a-z0-9.+-]+);base64,(.+)$/s.exec(url);
+          if (!m) continue;
+          const bytes = Buffer.from(m[2], "base64");
+          if (bytes.length === 0) continue;
+          out.push({
+            source: "opencode:paste",
+            bytes,
+            mime: m[1],
+            mtimeMs: row.time_created,
+          });
+          if (out.length >= limit) break;
+        } catch {
+          /* skip malformed part */
+        }
+      }
+      return out;
+    } finally {
+      db.close();
+    }
+  } catch {
+    // node:sqlite unavailable (Node < 22.5) or db locked/unreadable — no-op.
+    return [];
+  }
+}
+
 export interface DiscoverOptions {
   /** Number of images to return, newest first. */
   limit?: number;
@@ -271,14 +339,17 @@ export async function findRecentImages(
   // 4. Reasonix (DeepSeek-native terminal agent): sessions + project attachments.
   all.push(...(await scanReasonix(limit)));
 
-  // 5. Claude Code CLI pasted-image cache: ~/.claude/image-cache/<uuid>/N.png.
+  // 5. opencode: pasted images live as base64 in its SQLite part table.
+  all.push(...(await scanOpencode(limit)));
+
+  // 6. Claude Code CLI pasted-image cache: ~/.claude/image-cache/<uuid>/N.png.
   //    This is where the CLI/TUI actually writes pasted images (both Ctrl+V and
   //    drag-drop) — each session gets its own uuid dir with numbered files.
   //    This is the authoritative source for CLI pastes, so it is scanned first.
   const imageCacheRoot = path.join(home, ".claude", "image-cache");
   all.push(...(await scanDirForImages(imageCacheRoot, "claude:image-cache", limit)));
 
-  // 6. Claude Code transcripts (base64 image blocks) — fallback for sessions
+  // 7. Claude Code transcripts (base64 image blocks) — fallback for sessions
   //    whose image-cache entries were cleaned up.
   if (opts.includeClaudeTranscript !== false) {
     const transcripts = await findRecentTranscripts(2);
