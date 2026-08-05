@@ -39,14 +39,13 @@ The installer will:
 4. Write the MCP server config into the platform's config file.
 5. Copy this skill into place.
 6. Optionally install the **auto-loop hook** (Claude Code): a UserPromptSubmit
-   hook that detects when the clipboard holds an image and the user's message
-   looks like a "look at this" request, then injects guidance so you
-   automatically call `analyze_image(image="clipboard")`.
+   hook that snapshots any clipboard image to a session-isolated file whenever
+   you submit a message, so pasted screenshots are captured automatically.
 7. Print "restart your agent" instructions.
 
 > **If a `[vision-bridge]` system message appears in your context**, that's the
 > auto-loop hook firing: the user copied an image and wants you to look at it.
-> Follow it — call `analyze_image(image="clipboard", ...)`.
+> Follow it — call `analyze_image` with the snapshot path it gives you.
 
 **A2. Manual path — no repo on machine:**
 
