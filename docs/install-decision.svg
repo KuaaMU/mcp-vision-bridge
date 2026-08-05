@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="420" viewBox="0 0 1100 420" font-family="'Segoe UI', system-ui, sans-serif">
+  <!-- background -->
+  <rect width="1100" height="420" fill="#0f172a" rx="16"/>
+
+  <!-- title -->
+  <text x="550" y="46" text-anchor="middle" font-size="26" font-weight="700" fill="#e2e8f0">Which agent do you use?</text>
+
+  <!-- Three columns -->
+  <!-- Claude Code -->
+  <rect x="40" y="76" width="320" height="300" rx="14" fill="#1e293b" stroke="#60a5fa" stroke-width="2"/>
+  <text x="200" y="112" text-anchor="middle" font-size="22" font-weight="700" fill="#60a5fa">Claude Code</text>
+  <text x="200" y="140" text-anchor="middle" font-size="14" fill="#94a3b8">plugin marketplace · one command</text>
+  <g font-family="Consolas, Menlo, monospace" font-size="13">
+    <text x="70" y="180" fill="#a5f3fc">claude plugin marketplace</text>
+    <text x="70" y="200" fill="#a5f3fc">  add KuaaMU/agent-plugins</text>
+    <text x="70" y="220" fill="#a5f3fc">claude plugin install</text>
+    <text x="70" y="240" fill="#a5f3fc">  mcp-vision-bridge</text>
+  </g>
+  <rect x="60" y="270" width="280" height="40" rx="8" fill="rgba(96,165,250,0.15)"/>
+  <text x="200" y="295" text-anchor="middle" font-size="13" fill="#93c5fd">✓ MCP + skill + hook 自动装好</text>
+  <text x="200" y="355" text-anchor="middle" font-size="13" fill="#64748b">cc-switch 不可见 · 仅 Claude</text>
+
+  <!-- install.sh -->
+  <rect x="390" y="76" width="320" height="300" rx="14" fill="#1e293b" stroke="#34d399" stroke-width="2"/>
+  <text x="550" y="112" text-anchor="middle" font-size="22" font-weight="700" fill="#34d399">Any agent</text>
+  <text x="550" y="140" text-anchor="middle" font-size="14" fill="#94a3b8">install.sh · auto-detect</text>
+  <g font-family="Consolas, Menlo, monospace" font-size="13">
+    <text x="420" y="180" fill="#a7f3d0">git clone KuaaMU/mcp-vision-bridge</text>
+    <text x="420" y="200" fill="#a7f3d0">cd mcp-vision-bridge</text>
+    <text x="420" y="220" fill="#a7f3d0">./install.sh</text>
+  </g>
+  <rect x="410" y="250" width="280" height="56" rx="8" fill="rgba(52,211,153,0.15)"/>
+  <text x="550" y="273" text-anchor="middle" font-size="13" fill="#6ee7b7">✓ MCP 写进 ~/.claude.json</text>
+  <text x="550" y="293" text-anchor="middle" font-size="13" fill="#6ee7b7">✓ skill + hook</text>
+  <text x="550" y="355" text-anchor="middle" font-size="13" fill="#64748b">cc-switch 可见 · 可同步其他 agent</text>
+
+  <!-- Manual -->
+  <rect x="740" y="76" width="320" height="300" rx="14" fill="#1e293b" stroke="#a78bfa" stroke-width="2"/>
+  <text x="900" y="112" text-anchor="middle" font-size="22" font-weight="700" fill="#a78bfa">Manual</text>
+  <text x="900" y="140" text-anchor="middle" font-size="14" fill="#94a3b8">any MCP client</text>
+  <g font-family="Consolas, Menlo, monospace" font-size="13">
+    <text x="770" y="180" fill="#ddd6fe">npx -y mcp-vision-bridge</text>
+    <text x="770" y="200" fill="#ddd6fe"># as a stdio MCP server</text>
+    <text x="770" y="240" fill="#94a3b8">env:</text>
+    <text x="770" y="260" fill="#a78bfa">  VISION_OPENAI_BASE_URL=…</text>
+    <text x="770" y="280" fill="#a78bfa">  VISION_OPENAI_API_KEY=…</text>
+    <text x="770" y="300" fill="#a78bfa">  VISION_MODEL=…</text>
+  </g>
+  <text x="900" y="355" text-anchor="middle" font-size="13" fill="#64748b">full control · most steps</text>
+</svg>
