@@ -122,6 +122,7 @@ Pasting an image into a coding agent stores it somewhere. `image="recent"` /
 |---|---|---|
 | Claude Code CLI/TUI | `~/.claude/image-cache/<uuid>/N.png` (paste with **Alt+V**) | ✅ |
 | Reasonix | `~/.reasonix/sessions/` + project `.reasonix/attachments/` | ✅ |
+| opencode | `~/.local/share/opencode/opencode.db` (SQLite `part` table, Node ≥ 22.5) | ✅ |
 | Cowork (Claude-3p desktop) | `%LOCALAPPDATA%\Claude-3p\...\uploads\*_image.png` | ✅ |
 | Codex | `~/.codex/attachments/<session>/image-*.png` | ✅ |
 | Grok Build | `~/.grok/sessions/*/*/images/` | ✅ |

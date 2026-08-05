@@ -173,6 +173,7 @@ Check in this order:
 |---|---|
 | Claude Code CLI/TUI | `~/.claude/image-cache/<uuid>/N.png` (paste with **Alt+V**) |
 | Reasonix | `~/.reasonix/sessions/` + project `.reasonix/attachments/` |
+| opencode | `~/.local/share/opencode/opencode.db` (SQLite `part` table) |
 | Cowork (Claude-3p desktop) | `%LOCALAPPDATA%\Claude-3p\...\uploads\*_image.png` |
 | Codex | `~/.codex/attachments/<session>/image-*.png` |
 | Grok Build | `~/.grok/sessions/*/*/images/` |
