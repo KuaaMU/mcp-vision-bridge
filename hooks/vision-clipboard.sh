@@ -50,6 +50,8 @@ if [ "$HAS_IMAGE" != "yes" ]; then
 fi
 
 # 4) Both signals present -> inject guidance.
+# The message is self-exempting: if the agent's model can already see the image
+# directly, or analyze_image is not available, it should ignore this hint.
 cat <<'EOF'
-{"hookSpecificOutput":{"hookEventName":"UserPromptSubmit","additionalContext":"\n[vision-bridge] The system clipboard currently holds an image, and the user's message suggests they want you to look at it. Your model cannot see images directly. If the user wants you to analyze/read/describe this image, call the analyze_image MCP tool with image=\"clipboard\" and an appropriate task (describe | ocr | ui | layout | qa), or a free-form prompt matching their question. If they gave an explicit file path or URL instead, use that. Do not claim you can see the image — route it through analyze_image.\n"}}
+{"hookSpecificOutput":{"hookEventName":"UserPromptSubmit","additionalContext":"\n[vision-bridge] The system clipboard currently holds an image, and the user's message suggests they want you to look at it. If you (the model) can already see image content directly, ignore this hint and analyze the image yourself — this MCP is only a bridge for text-only models. Otherwise, if you want to analyze/read/describe this image and the analyze_image tool IS available, call it with image=\"clipboard\" and an appropriate task (describe | ocr | ui | layout | qa), or a free-form prompt matching their question. If they gave an explicit file path or URL instead, use that. If analyze_image is NOT available, just say you cannot see the image and ask for a path or clipboard copy.\n"}}
 EOF
