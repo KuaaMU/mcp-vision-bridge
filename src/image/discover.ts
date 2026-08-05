@@ -18,6 +18,7 @@
  */
 
 import { promises as fs } from "node:fs";
+import { createHash } from "node:crypto";
 import * as os from "node:os";
 import * as path from "node:path";
 
@@ -228,7 +229,15 @@ export async function findRecentImages(
   const grokRoot = path.join(home, ".grok", "sessions");
   all.push(...(await scanDirForImages(grokRoot, "grok", limit)));
 
-  // 4. Claude Code transcripts (base64 image blocks)
+  // 5. Claude Code CLI pasted-image cache: ~/.claude/image-cache/<uuid>/N.png.
+  //    This is where the CLI/TUI actually writes pasted images (both Ctrl+V and
+  //    drag-drop) — each session gets its own uuid dir with numbered files.
+  //    This is the authoritative source for CLI pastes, so it is scanned first.
+  const imageCacheRoot = path.join(home, ".claude", "image-cache");
+  all.push(...(await scanDirForImages(imageCacheRoot, "claude:image-cache", limit)));
+
+  // 6. Claude Code transcripts (base64 image blocks) — fallback for sessions
+  //    whose image-cache entries were cleaned up.
   if (opts.includeClaudeTranscript !== false) {
     const transcripts = await findRecentTranscripts(2);
     for (const t of transcripts) {
@@ -241,26 +250,22 @@ export async function findRecentImages(
     }
   }
 
-  // 5. Our own hook snapshots (transcript extraction fallback).
-  const pasteRoot = path.join(home, ".claude", "vision-paste");
-  all.push(...(await scanDirForImages(pasteRoot, "vision-paste", limit)));
-
-  // 6. Claude Code CLI pasted-image cache: ~/.claude/image-cache/<uuid>/N.png.
-  //    This is where the CLI/TUI actually writes pasted images (both Ctrl+V and
-  //    drag-drop) — each session gets its own uuid dir with numbered files.
-  const imageCacheRoot = path.join(home, ".claude", "image-cache");
-  all.push(...(await scanDirForImages(imageCacheRoot, "claude:image-cache", limit)));
-
-  // Newest first, dedupe by filePath (or bytes hash), cap at limit.
+  // Newest first, dedupe by filePath (or content hash for in-memory bytes),
+  // cap at limit.
   all.sort((a, b) => b.mtimeMs - a.mtimeMs);
   const seen = new Set<string>();
   const unique: DiscoveredImage[] = [];
   for (const img of all) {
-    const key = img.filePath ?? img.source;
+    const key = img.filePath ?? (img.bytes ? contentHash(img.bytes) : img.source);
     if (seen.has(key)) continue;
     seen.add(key);
     unique.push(img);
     if (unique.length >= limit) break;
   }
   return unique;
+}
+
+/** sha1 hex prefix — content identity for deduping in-memory image bytes. */
+function contentHash(bytes: Buffer): string {
+  return createHash("sha1").update(bytes).digest("hex").slice(0, 16);
 }
