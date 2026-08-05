@@ -47,7 +47,40 @@ The image never reaches the agent. A complete text description does. The agent c
 
 ---
 
-## 🚀 Two-minute install (recommended)
+## ⚡ One-command install (Claude Code, easiest)
+
+This repo is a **Claude Code plugin marketplace**. Install the whole thing —
+MCP server + vision skill + auto-loop hook — with two commands:
+
+```bash
+claude plugin marketplace add https://github.com/KuaaMU/mcp-vision-bridge
+claude plugin install mcp-vision-bridge
+```
+
+During install, Claude Code prompts you for three values (or set them with
+`--config`):
+
+```bash
+claude plugin install mcp-vision-bridge \
+  --config vision_openai_base_url="https://opencode.ai/zen/go/v1" \
+  --config vision_openai_api_key="sk-..." \
+  --config vision_model="mimo-v2.5"
+```
+
+Then **restart Claude Code**. Screenshot something, copy it (Ctrl+C), and type
+"看看这个" — the auto-loop hook snapshots your clipboard and the agent calls
+`analyze_image` through your vision model automatically.
+
+> The plugin registers: an `analyze_image` MCP tool, the `vision` skill, and a
+> `UserPromptSubmit` hook. You can configure/disable it anytime with
+> `/plugin configure mcp-vision-bridge` and `/plugin`.
+>
+> **Submission:** this plugin is also submitted to the Claude community
+> marketplace (`@claude-community`) for one-click discovery.
+
+---
+
+## 🚀 Two-minute install (all agents, recommended)
 
 The repo ships a **one-click installer** that wires everything up: it detects your
 agent, collects your vision endpoint/key/model, stores the key as an env var,
