@@ -288,7 +288,7 @@ All four ran through the **same `analyze_image` tool**, same system prompt, zero
 | `VISION_GEMINI_BASE_URL` | **yes*** | Gemini base |
 | `VISION_GEMINI_API_KEY` | **yes*** | Google AI Studio key |
 | `VISION_MAX_TOKENS` | optional | `2048` — Vision output cap (complex screenshots → 3000+) |
-| `VISION_TIMEOUT_MS` | optional | `60000` — Fetch + provider timeout |
+| `VISION_TIMEOUT_MS` | optional | `30000` — Fetch + provider timeout |
 | `VISION_CACHE_DIR` | optional | (memory only) — On-disk image cache dir |
 | `VISION_BLOCK_PRIVATE_URLS` | optional | `false` — `true` blocks localhost/private URL fetches |
 
