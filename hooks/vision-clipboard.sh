@@ -3,15 +3,19 @@
 #
 # When the user submits a message that suggests they want the agent to "see"
 # an image (vision keywords, or a pasted-image placeholder) AND the system
-# clipboard currently holds an image, this hook injects context that tells the
-# agent to call the analyze_image MCP tool with image="clipboard".
+# clipboard currently holds an image, this hook:
+#   1. SNAPSHOTS the clipboard image to ~/.claude/vision-paste/ RIGHT NOW
+#      (the moment the message is submitted, the clipboard is still the image —
+#       this is immune to later text copies overwriting it, and supports
+#       multiple pastes each getting their own timestamped file).
+#   2. Injects the ACTUAL FILE PATH into context, telling the agent to call
+#      analyze_image with that path (no dependency on the clipboard).
 #
-# The agent's own model cannot see images; this is what makes the flow feel
-# automatic: paste/copy an image, type "看看这个" and the agent routes the
-# pixels through the configured vision model without further prompting.
+# This is the robust fix for: multiple images, mixed text/image copies, and
+# clipboard read-timing races.
 #
 # Install: add to UserPromptSubmit hooks in ~/.claude/settings.json:
-#   { "type": "command", "command": "bash ~/.claude/hooks/vision-clipboard.sh", "timeout": 10 }
+#   { "type": "command", "command": "bash ~/.claude/hooks/vision-clipboard.sh", "timeout": 15 }
 #
 # Input: hook JSON on stdin (UserPromptSubmit event).
 # Output: {"hookSpecificOutput":{"hookEventName":"UserPromptSubmit","additionalContext":"..."}}
@@ -26,7 +30,6 @@ process.stdin.on("data", d => s += d);
 process.stdin.on("end", () => {
   try {
     const j = JSON.parse(s);
-    // UserPromptSubmit payload: probe common field names.
     const p = j?.prompt ?? j?.tool_input?.prompt ?? j?.session?.prompt ?? "";
     process.stdout.write(String(p));
   } catch { process.stdout.write(""); }
@@ -40,18 +43,27 @@ if ! printf '%s' "$PROMPT" | grep -qEi "看图|看这个|看下|看看|分析|�
   exit 0
 fi
 
-# 3) Check the system clipboard for an image.
-HAS_IMAGE="$(powershell -NoProfile -Command "
-  try { \$img = Get-Clipboard -Format Image -ErrorAction SilentlyContinue; if (\$img) { 'yes' } else { 'no' } } catch { 'no' }
+# 3) Snapshot the clipboard image NOW (timestamped file).
+# Use USERPROFILE (Windows native path) — $HOME in Git Bash is a /c/Users/... MSYS
+# path that PowerShell can't resolve.
+WIN_HOME="${USERPROFILE:-$HOME}"
+PASTE_DIR="${VISION_PASTE_DIR:-$WIN_HOME/.claude/vision-paste}"
+mkdir -p "$PASTE_DIR"
+SNAP="$(powershell -NoProfile -Command "
+  \$dir = '$PASTE_DIR'
+  try {
+    \$img = Get-Clipboard -Format Image -ErrorAction SilentlyContinue
+    if (\$img) {
+      \$f = Join-Path \$dir ('paste-' + [DateTime]::Now.ToString('yyyyMMdd-HHmmss') + '.png')
+      \$img.Save(\$f)
+      Write-Output \$f
+    } else { Write-Output 'NO_IMAGE' }
+  } catch { Write-Output 'NO_IMAGE' }
 " 2>/dev/null | tr -d '\r' | tail -1)"
 
-if [ "$HAS_IMAGE" != "yes" ]; then
+if [ "$SNAP" = "NO_IMAGE" ] || [ -z "$SNAP" ]; then
   exit 0
 fi
 
-# 4) Both signals present -> inject guidance.
-# The message is self-exempting: if the agent's model can already see the image
-# directly, or analyze_image is not available, it should ignore this hint.
-cat <<'EOF'
-{"hookSpecificOutput":{"hookEventName":"UserPromptSubmit","additionalContext":"\n[vision-bridge] The system clipboard currently holds an image, and the user's message suggests they want you to look at it. If you (the model) can already see image content directly, ignore this hint and analyze the image yourself — this MCP is only a bridge for text-only models. Otherwise, if you want to analyze/read/describe this image and the analyze_image tool IS available, call it with image=\"clipboard\" and an appropriate task (describe | ocr | ui | layout | qa), or a free-form prompt matching their question. If they gave an explicit file path or URL instead, use that. If analyze_image is NOT available, just say you cannot see the image and ask for a path or clipboard copy.\n"}}
-EOF
+# 4) Injected context: point the agent at the snapshot file.
+printf '{"hookSpecificOutput":{"hookEventName":"UserPromptSubmit","additionalContext":"\\n[vision-bridge] The user copied an image and wants you to look at it. It has been snapshotted to a file:\\n  %s\\nIf you (the model) can already see image content directly, ignore this hint and analyze the image yourself. Otherwise call the analyze_image MCP tool with image=%s and an appropriate task (describe | ocr | ui | layout | qa), or a free-form prompt matching their question. If analyze_image is not available, say you cannot see the image and ask for a path.\\n"}}' "$SNAP" "\"$SNAP\""
