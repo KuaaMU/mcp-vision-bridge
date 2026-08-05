@@ -32,7 +32,7 @@ only way to look.
 |---|---|
 | User gave a file path, or one exists in the workspace/prompt | **`image="<path>"` — best, works everywhere.** Use this whenever a path is available. |
 | User dragged an image file into the chat | The drag inserts a real path in the prompt. Use it directly: `image="<that path>"`. |
-| User pasted an image (Claude Code CLI / Cowork / Codex / Grok) | `image="recent"` — auto-finds the most recent pasted image across agents |
+| User pasted an image (Claude Code CLI / Cowork / Codex / Grok) | `image="recent"` — auto-finds the most recent pasted image across agents (Claude Code `~/.claude/image-cache/`, Cowork uploads, Codex attachments) |
 | User pasted several images in this session | `image="session"` — list/analyze images pasted in the current session |
 | User just took a screenshot / copied an image to clipboard | `image="clipboard"` — reads the OS clipboard |
 | User pasted an image and you got `[Unsupported Image]` / nothing | **The desktop-GUI paste may have failed silently.** Ask the user to **drag the image file into the chat** (inserts a path) or paste a path, then use it |

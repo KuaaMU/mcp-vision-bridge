@@ -127,12 +127,18 @@ Check in this order:
    input box or paste a path** — dragging an image file generates its path in the
    prompt on every platform.
 
-2. **The user pasted an image that WAS captured** (Claude Code CLI transcript,
+2. **The user pasted an image that WAS captured** (Claude Code CLI `image-cache/`,
    Cowork desktop `uploads/`, Codex `attachments/`). Use auto-discovery:
    - `image="recent"` → analyze the most recently pasted image.
    - `image="session"` → list/analyze images pasted in this session.
-   → The tool scans Cowork uploads, Codex attachments, Grok session images, and
-   Claude transcripts automatically. No clipboard dependency.
+   → The tool scans Claude Code `~/.claude/image-cache/`, Cowork uploads, Codex
+   attachments, Grok session images, and Claude transcripts automatically. No
+   clipboard dependency.
+   > **Claude Code CLI pasting (Windows):** use **Alt+V** to paste an image from
+   > the clipboard — the CLI writes it to `~/.claude/image-cache/<uuid>/N.png`,
+   > which discovery finds. Note Windows "copy file" in Explorer puts a *file
+   > list* on the clipboard, not image bytes, so Alt+V won't see it; copy the
+   > image from a screenshot tool/browser, or just paste the file path instead.
 
 3. **The image is on the system clipboard** — a screenshot was just taken, or the
    user copied an image (Ctrl+C). This is a fast path for "look at my screen".
