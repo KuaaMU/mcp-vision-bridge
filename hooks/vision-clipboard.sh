@@ -11,8 +11,11 @@
 #   2. Injects the ACTUAL FILE PATH into context, telling the agent to call
 #      analyze_image with that path (no dependency on the clipboard).
 #
-# This is the robust fix for: multiple images, mixed text/image copies, and
-# clipboard read-timing races.
+# Cross-platform clipboard image snapshot:
+#   - Windows: PowerShell Get-Clipboard -Format Image
+#   - macOS:   osascript «class PNGf» coercion (clipboard is TIFF natively)
+#   - Linux:   xclip (X11) or wl-paste (Wayland)
+# On platforms without a clipboard image, the hook stays silent.
 #
 # Install: add to UserPromptSubmit hooks in ~/.claude/settings.json:
 #   { "type": "command", "command": "bash ~/.claude/hooks/vision-clipboard.sh", "timeout": 15 }
@@ -44,26 +47,56 @@ if ! printf '%s' "$PROMPT" | grep -qEi "看图|看这个|看下|看看|分析|�
 fi
 
 # 3) Snapshot the clipboard image NOW (timestamped file).
-# Use USERPROFILE (Windows native path) — $HOME in Git Bash is a /c/Users/... MSYS
-# path that PowerShell can't resolve.
 WIN_HOME="${USERPROFILE:-$HOME}"
-PASTE_DIR="${VISION_PASTE_DIR:-$WIN_HOME/.claude/vision-paste}"
+# Normalize to forward slashes so the injected path works on every platform
+# (Windows accepts both \ and /; the vision MCP resolver handles both).
+WIN_HOME_FS="$(printf '%s' "$WIN_HOME" | sed 's|\\|/|g')"
+PASTE_DIR="${VISION_PASTE_DIR:-$WIN_HOME_FS/.claude/vision-paste}"
 mkdir -p "$PASTE_DIR"
-SNAP="$(powershell -NoProfile -Command "
-  \$dir = '$PASTE_DIR'
-  try {
-    \$img = Get-Clipboard -Format Image -ErrorAction SilentlyContinue
-    if (\$img) {
-      \$f = Join-Path \$dir ('paste-' + [DateTime]::Now.ToString('yyyyMMdd-HHmmss') + '.png')
-      \$img.Save(\$f)
-      Write-Output \$f
-    } else { Write-Output 'NO_IMAGE' }
-  } catch { Write-Output 'NO_IMAGE' }
-" 2>/dev/null | tr -d '\r' | tail -1)"
+OUTFILE="$PASTE_DIR/paste-$(date +%Y%m%d-%H%M%S).png"
 
-if [ "$SNAP" = "NO_IMAGE" ] || [ -z "$SNAP" ]; then
+OS="$(uname -s 2>/dev/null || echo 'unknown')"
+case "$OS" in
+  Darwin)
+    # macOS: AppleScript coerces the clipboard (TIFF) directly to PNG bytes.
+    osascript -e "set h to (open for access (POSIX file \"$OUTFILE\") with write permission)" \
+              -e "write (the clipboard as «class PNGf») to h" \
+              -e "close access h" 2>/dev/null
+    ;;
+  Linux)
+    # Try Wayland first, then X11.
+    if command -v wl-paste >/dev/null 2>&1; then
+      wl-paste --type image/png > "$OUTFILE" 2>/dev/null
+    elif command -v xclip >/dev/null 2>&1; then
+      xclip -selection clipboard -t image/png -o > "$OUTFILE" 2>/dev/null
+    else
+      exit 0
+    fi
+    ;;
+  MINGW*|MSYS*|CYGWIN*)
+    # Windows: PowerShell Get-Clipboard -Format Image, saved to $OUTFILE.
+    powershell -NoProfile -Command "
+      \$f = '$OUTFILE'
+      try {
+        \$img = Get-Clipboard -Format Image -ErrorAction SilentlyContinue
+        if (\$img) {
+          \$img.Save(\$f)
+          Write-Output \$f
+        } else { Write-Output 'NO_IMAGE' }
+      } catch { Write-Output 'NO_IMAGE' }
+    " 2>/dev/null | tr -d '\r' | tail -1
+    ;;
+  *)
+    exit 0
+    ;;
+esac
+
+# 4) Verify a non-empty image was actually written.
+if [ ! -s "$OUTFILE" ]; then
+  # Non-Windows path failed to write; also handle the Windows branch which
+  # prints the actual path instead of using $OUTFILE.
   exit 0
 fi
 
-# 4) Injected context: point the agent at the snapshot file.
-printf '{"hookSpecificOutput":{"hookEventName":"UserPromptSubmit","additionalContext":"\\n[vision-bridge] The user copied an image and wants you to look at it. It has been snapshotted to a file:\\n  %s\\nIf you (the model) can already see image content directly, ignore this hint and analyze the image yourself. Otherwise call the analyze_image MCP tool with image=%s and an appropriate task (describe | ocr | ui | layout | qa), or a free-form prompt matching their question. If analyze_image is not available, say you cannot see the image and ask for a path.\\n"}}' "$SNAP" "\"$SNAP\""
+# 5) Injected context: point the agent at the snapshot file.
+printf '{"hookSpecificOutput":{"hookEventName":"UserPromptSubmit","additionalContext":"\\n[vision-bridge] The user copied an image and wants you to look at it. It has been snapshotted to a file:\\n  %s\\nIf you (the model) can already see image content directly, ignore this hint and analyze the image yourself. Otherwise call the analyze_image MCP tool with image=%s and an appropriate task (describe | ocr | ui | layout | qa), or a free-form prompt matching their question. If analyze_image is not available, say you cannot see the image and ask for a path.\\n"}}' "$OUTFILE" "\"$OUTFILE\""
