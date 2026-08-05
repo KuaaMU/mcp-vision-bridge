@@ -131,9 +131,9 @@ Check in this order:
    Cowork desktop `uploads/`, Codex `attachments/`). Use auto-discovery:
    - `image="recent"` → analyze the most recently pasted image.
    - `image="session"` → list/analyze images pasted in this session.
-   → The tool scans Claude Code `~/.claude/image-cache/`, Cowork uploads, Codex
-   attachments, Grok session images, and Claude transcripts automatically. No
-   clipboard dependency.
+   → The tool scans Claude Code `~/.claude/image-cache/`, Reasonix sessions/attachments,
+   Cowork uploads, Codex attachments, Grok session images, and Claude transcripts
+   automatically. No clipboard dependency.
    > **Claude Code CLI pasting (Windows):** use **Alt+V** to paste an image from
    > the clipboard — the CLI writes it to `~/.claude/image-cache/<uuid>/N.png`,
    > which discovery finds. Note Windows "copy file" in Explorer puts a *file

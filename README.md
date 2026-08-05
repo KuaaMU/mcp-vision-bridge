@@ -85,9 +85,9 @@ more. No clipboard, no paste quirks.
 3. Your agent calls `analyze_image` → the vision model describes it in detail
 
 Paste 3 images? The hook reads your session transcript (lossless, multi-image).
-Cowork and Codex save pasted images to files automatically; `image="recent"`
-finds them. If a desktop GUI doesn't register a paste (it can fail silently),
-just **drag the file in** — a path always works.
+`image="recent"` auto-finds pasted images across **Claude Code CLI, Reasonix,
+Cowork, and Codex** — no clipboard needed. If a desktop GUI doesn't register a
+paste (it can fail silently), just **drag the file in** — a path always works.
 
 ### The one tool
 
