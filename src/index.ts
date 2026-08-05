@@ -44,6 +44,8 @@ export function buildServer(config = loadConfig()) {
       "  - URL: http(s) URL to an image on the web or a local server",
       '  - "data:...": base64 data URI, e.g. data:image/png;base64,<payload>',
       '  - "clipboard": read the image currently copied to the system clipboard',
+      '  - "recent": auto-find the most recently pasted image (scans Codex attachments, Grok session images, Claude transcripts)',
+      '  - "session": auto-find images pasted in this session',
       '  - "raw": the string itself is the literal raw image bytes',
       "",
       "Pick `task` for common jobs (describe | ocr | ui | layout | qa) or pass your own `prompt`.",
@@ -54,7 +56,7 @@ export function buildServer(config = loadConfig()) {
       image: z
         .string()
         .min(1)
-        .describe("Image source: file path, http(s) URL, data: URI, 'clipboard', or 'raw'."),
+        .describe("Image source: file path, URL, data: URI, 'clipboard', 'recent', 'session', or 'raw'."),
       prompt: z
         .string()
         .optional()

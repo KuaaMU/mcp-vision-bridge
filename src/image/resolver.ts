@@ -16,6 +16,7 @@ import { imageFetchFailed, invalidInput } from "../errors.js";
 import { readClipboardImage, type ClipboardConfig } from "./clipboard.js";
 import { ImageCache } from "./cache.js";
 import { assertSupportedImage, detectMime } from "./mime.js";
+import { findRecentImages } from "./discover.js";
 
 export interface ResolvedImage {
   bytes: Buffer;
@@ -52,10 +53,12 @@ function isDataUrl(input: string): boolean {
  * a legitimate path like "report.png" would be misread as raw bytes.
  */
 export function classifySource(input: string): {
-  kind: "path" | "url" | "data" | "clipboard" | "raw";
+  kind: "path" | "url" | "data" | "clipboard" | "raw" | "recent" | "session";
   cacheKey: string;
 } {
   if (input === "clipboard") return { kind: "clipboard", cacheKey: "clipboard:live" };
+  if (input === "recent") return { kind: "recent", cacheKey: "recent:images" };
+  if (input === "session") return { kind: "session", cacheKey: "session:images" };
   if (input === "raw") return { kind: "raw", cacheKey: "raw:literal" };
   if (isHttpUrl(input)) return { kind: "url", cacheKey: `url:${input}` };
   if (isDataUrl(input)) return { kind: "data", cacheKey: `data:${input.slice(0, 64)}` };
@@ -96,6 +99,25 @@ export async function resolveImage(
       );
     }
     return finish(bytes, "clipboard");
+  }
+
+  // Auto-discovery: find recently pasted images across agents.
+  if (kind === "recent" || kind === "session") {
+    const images = await findRecentImages({ limit: kind === "session" ? 10 : 1 });
+    if (images.length === 0) {
+      throw invalidInput(
+        `No images found for "${input}". Paste an image into your agent first, ` +
+          "or pass an explicit image path / URL / clipboard.",
+      );
+    }
+    const img = images[0];
+    if (img.filePath) {
+      return finish(await fs.readFile(img.filePath), `${kind}:${img.source}`);
+    }
+    if (img.bytes) {
+      return finish(img.bytes, `${kind}:${img.source}`);
+    }
+    throw invalidInput(`Discovered image has no readable data (${img.source}).`);
   }
 
   if (kind === "raw") {

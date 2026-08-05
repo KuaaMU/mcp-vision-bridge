@@ -111,27 +111,20 @@ Check in this order:
    `./screenshots/ui.png`).
    → Call `analyze_image(image="<path>", ...)` directly. **No user action needed.**
 
-2. **The image is on the system clipboard** — a screenshot was just taken, or the
-   user copied an image (Ctrl+C). This is the fastest path for "look at my screen"
-   requests.
-   → Call `analyze_image(image="clipboard", ...)`. The tool reads the OS clipboard.
-   If the clipboard has no image, the tool returns a clear error — then fall through.
+2. **The user pasted an image into the chat** — it's captured in the agent's
+   transcript/session. Use auto-discovery:
+   - `image="recent"` → analyze the most recently pasted image.
+   - `image="session"` → list/analyze images pasted in this session.
+   → The tool scans Codex attachments, Grok session images, and Claude
+   transcripts automatically. No clipboard dependency.
 
-3. **The user pasted an image and you got `[Unsupported Image]`** — you have the
-   placeholder but no path. Do **NOT** guess or describe from nothing. Tell the
-   user (politely, in Chinese if the conversation is Chinese):
+3. **The image is on the system clipboard** — a screenshot was just taken, or the
+   user copied an image (Ctrl+C). This is a fast path for "look at my screen".
+   → Call `analyze_image(image="clipboard", ...)`.
 
-   > 我这边收不到你粘贴的图片内容（当前模型不支持直接读取图片）。
-   > 请二选一：
-   > 1) 把图片文件保存到本地，告诉我路径（例如 `D:\shots\1.png`）；
-   > 2) 或者截图后**复制到剪贴板**（截图后按 Ctrl+C），然后告诉我"看剪贴板"。
-   >
-   > 我就能通过视觉模型帮你分析。
-
-   Wait for the user to provide a path or copy to clipboard, then call `analyze_image`.
-
-4. **A URL to an image** — the user gave you an http(s) URL.
-   → Call `analyze_image(image="https://...", ...)`.
+4. **The user pasted an image and you got `[Unsupported Image]`** — you have the
+   placeholder but no path. Use `image="recent"` to find it, or ask the user to
+   save it to a file / copy to clipboard.
 
 ### Calling the tool
 

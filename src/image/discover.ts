@@ -1,0 +1,180 @@
+/**
+ * Cross-agent image discovery.
+ *
+ * Every agent persists pasted images somewhere predictable. Instead of relying
+ * on the OS clipboard (single-image, overwritten on every copy), this module
+ * finds the images a user actually pasted — newest first — across the agents
+ * we support:
+ *
+ *   - Codex:       ~/.codex/attachments/<session>/image-*.png|jpg
+ *   - Grok Build:  ~/.grok/sessions/<cwd>/<session>/images/
+ *   - Claude Code: session transcripts (*.jsonl) with base64 image blocks
+ *
+ * The caller (analyze_image with image="recent" / "session") uses these to
+ * analyze pasted screenshots reliably, including multiple images.
+ */
+
+import { promises as fs } from "node:fs";
+import * as os from "node:os";
+import * as path from "node:path";
+
+export interface DiscoveredImage {
+  /** Source label for errors/cache keys. */
+  source: string;
+  /** Resolvable path for files, or null when we must pass raw bytes. */
+  filePath?: string;
+  bytes?: Buffer;
+  mime?: string;
+  /** Last-modified timestamp for sorting. */
+  mtimeMs: number;
+}
+
+/** Image file extensions we accept when scanning directories. */
+const IMAGE_EXT = /\.(png|jpe?g|gif|webp)$/i;
+
+/** Home directory, cross-platform (USERPROFILE on Windows, HOME elsewhere). */
+function homeDir(): string {
+  return process.env.USERPROFILE ?? process.env.HOME ?? os.homedir();
+}
+
+/** Scan a directory tree for image files, newest first. */
+async function scanDirForImages(
+  root: string,
+  sourceLabel: string,
+  limit: number,
+): Promise<DiscoveredImage[]> {
+  const out: DiscoveredImage[] = [];
+  async function walk(dir: string) {
+    let entries;
+    try {
+      entries = await fs.readdir(dir, { withFileTypes: true });
+    } catch {
+      return;
+    }
+    for (const e of entries) {
+      const full = path.join(dir, e.name);
+      if (e.isDirectory()) {
+        await walk(full);
+      } else if (e.isFile() && IMAGE_EXT.test(e.name)) {
+        try {
+          const st = await fs.stat(full);
+          out.push({ source: `${sourceLabel}:${e.name}`, filePath: full, mtimeMs: st.mtimeMs });
+        } catch {
+          /* skip unreadable */
+        }
+      }
+    }
+  }
+  await walk(root);
+  return out.sort((a, b) => b.mtimeMs - a.mtimeMs).slice(0, limit);
+}
+
+/** Extract base64 image blocks from a Claude Code session transcript. */
+export function extractImagesFromTranscript(text: string, limit: number): DiscoveredImage[] {
+  const out: DiscoveredImage[] = [];
+  const re = /\{"type":"image","source":\{"type":"base64","media_type":"([^"]+)","data":"([^"]+)"\}\}/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(text)) !== null && out.length < limit) {
+    try {
+      const bytes = Buffer.from(m[2], "base64");
+      if (bytes.length > 0) {
+        out.push({ source: "claude:transcript", bytes, mime: m[1], mtimeMs: Date.now() });
+      }
+    } catch {
+      /* skip malformed */
+    }
+  }
+  return out;
+}
+
+/** Find the most recent Claude Code session transcript under ~/.claude/projects/. */
+async function findRecentTranscripts(limit: number): Promise<string[]> {
+  const root = path.join(homeDir(), ".claude", "projects");
+  const transcripts: string[] = [];
+  async function walk(dir: string) {
+    let entries;
+    try {
+      entries = await fs.readdir(dir, { withFileTypes: true });
+    } catch {
+      return;
+    }
+    for (const e of entries) {
+      const full = path.join(dir, e.name);
+      if (e.isDirectory()) {
+        await walk(full);
+      } else if (e.isFile() && e.name.endsWith(".jsonl")) {
+        transcripts.push(full);
+      }
+    }
+  }
+  await walk(root);
+  const byTime = await Promise.all(
+    transcripts.map(async (t) => {
+      try {
+        const st = await fs.stat(t);
+        return { t, m: st.mtimeMs };
+      } catch {
+        return { t, m: 0 };
+      }
+    }),
+  );
+  return byTime.sort((a, b) => b.m - a.m).slice(0, limit).map((x) => x.t);
+}
+
+export interface DiscoverOptions {
+  /** Number of images to return, newest first. */
+  limit?: number;
+  /** Whether to also read Claude Code transcripts (slower). */
+  includeClaudeTranscript?: boolean;
+}
+
+/**
+ * Find the most recently pasted images across the agents we support.
+ * Newest first, deduplicated, capped at `limit`.
+ */
+export async function findRecentImages(
+  opts: DiscoverOptions = {},
+): Promise<DiscoveredImage[]> {
+  const limit = opts.limit ?? 10;
+  const all: DiscoveredImage[] = [];
+  const home = homeDir();
+
+  // 1. Codex attachments: ~/.codex/attachments/<session>/image-*.png
+  const codexRoot = path.join(home, ".codex", "attachments");
+  all.push(...(await scanDirForImages(codexRoot, "codex", limit)));
+
+  // 2. Grok Build session images: ~/.grok/sessions/*/*/images/
+  const grokRoot = path.join(home, ".grok", "sessions");
+  all.push(...(await scanDirForImages(grokRoot, "grok", limit)));
+
+  // 3. Claude Code transcripts (base64 image blocks)
+  if (opts.includeClaudeTranscript !== false) {
+    const transcripts = await findRecentTranscripts(2);
+    for (const t of transcripts) {
+      try {
+        const text = await fs.readFile(t, "utf8");
+        all.push(...extractImagesFromTranscript(text, limit));
+      } catch {
+        /* skip */
+      }
+    }
+  }
+
+  // 4. Our own hook snapshots are already under Claude transcripts via the
+  //    injected text; also scan vision-paste as a fallback.
+  const pasteRoot = path.join(home, ".claude", "vision-paste");
+  all.push(...(await scanDirForImages(pasteRoot, "vision-paste", limit)));
+
+  // Newest first, dedupe by filePath (or bytes hash), cap at limit.
+  all.sort((a, b) => b.mtimeMs - a.mtimeMs);
+  const seen = new Set<string>();
+  const unique: DiscoveredImage[] = [];
+  for (const img of all) {
+    const key = img.filePath ?? img.source;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    unique.push(img);
+    if (unique.length >= limit) break;
+  }
+  return unique;
+}
