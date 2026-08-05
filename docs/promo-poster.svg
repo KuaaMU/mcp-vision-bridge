@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1242" height="1656" viewBox="0 0 1242 1656" font-family="'Segoe UI', system-ui, sans-serif">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0f172a"/>
+      <stop offset="1" stop-color="#1e1b4b"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#60a5fa"/>
+      <stop offset="1" stop-color="#a78bfa"/>
+    </linearGradient>
+  </defs>
+
+  <!-- background -->
+  <rect width="1242" height="1656" fill="url(#bg)"/>
+
+  <!-- decorative -->
+  <g opacity="0.05">
+    <circle cx="150" cy="200" r="300" fill="#60a5fa"/>
+    <circle cx="1100" cy="1400" r="380" fill="#a78bfa"/>
+  </g>
+
+  <!-- top badge -->
+  <rect x="90" y="70" width="240" height="52" rx="26" fill="rgba(96,165,250,0.16)"/>
+  <text x="210" y="104" text-anchor="middle" font-size="24" font-weight="600" fill="#60a5fa">开源 · 免费</text>
+
+  <!-- title -->
+  <text x="90" y="220" font-size="72" font-weight="800" fill="#ffffff">DeepSeek V4 Flash</text>
+  <text x="90" y="310" font-size="72" font-weight="800" fill="#ffffff">代码很强，但它是</text>
+  <text x="90" y="400" font-size="72" font-weight="800" fill="#f87171">"睁眼瞎"</text>
+
+  <!-- pain point -->
+  <rect x="90" y="460" width="1062" height="90" rx="16" fill="rgba(248,113,113,0.1)" stroke="rgba(248,113,113,0.3)"/>
+  <text x="110" y="520" font-size="28" fill="#fca5a5">你贴报错截图 → 它说 "我看不到图片" 😭</text>
+
+  <!-- arrow down -->
+  <text x="621" y="640" text-anchor="middle" font-size="60" fill="#64748b">↓</text>
+
+  <!-- solution -->
+  <text x="90" y="760" font-size="56" font-weight="800" fill="#34d399">mcp-vision-bridge</text>
+  <text x="90" y="830" font-size="30" fill="#a7f3d0">给纯文本模型装上"眼睛" 👁️</text>
+
+  <!-- three features -->
+  <g>
+    <rect x="90" y="900" width="1062" height="90" rx="16" fill="rgba(52,211,153,0.08)" stroke="rgba(52,211,153,0.25)"/>
+    <text x="110" y="955" font-size="28" fill="#6ee7b7">✅ 报错截图一眼看懂</text>
+  </g>
+  <g transform="translate(0,120)">
+    <rect x="90" y="900" width="1062" height="90" rx="16" fill="rgba(52,211,153,0.08)" stroke="rgba(52,211,153,0.25)"/>
+    <text x="110" y="955" font-size="28" fill="#6ee7b7">✅ UI 界面自动分析</text>
+  </g>
+  <g transform="translate(0,240)">
+    <rect x="90" y="900" width="1062" height="90" rx="16" fill="rgba(52,211,153,0.08)" stroke="rgba(52,211,153,0.25)"/>
+    <text x="110" y="955" font-size="28" fill="#6ee7b7">✅ 截图文字一键提取</text>
+  </g>
+
+  <!-- compatibility -->
+  <rect x="90" y="1280" width="1062" height="90" rx="16" fill="rgba(167,139,250,0.1)"/>
+  <text x="110" y="1335" font-size="28" fill="#c4b5fd">装一次 · Claude Code / Codex / opencode 通用</text>
+
+  <!-- footer -->
+  <rect x="90" y="1430" width="1062" height="120" rx="20" fill="#1e293b" stroke="url(#accent)" stroke-width="2"/>
+  <text x="621" y="1482" text-anchor="middle" font-family="Consolas, Menlo, monospace" font-size="30" fill="#93c5fd">github.com/KuaaMU/mcp-vision-bridge</text>
+  <text x="621" y="1522" text-anchor="middle" font-size="22" fill="#64748b">我开发的 · 欢迎 star ⭐ · 后端接 mimo v2.5 等任意多模态模型</text>
+</svg>
