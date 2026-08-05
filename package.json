@@ -1,0 +1,52 @@
+{
+  "name": "llm-vision-mcp",
+  "version": "0.1.0",
+  "description": "MCP server that gives text-only LLM coding agents vision: analyze local files, URLs, base64, clipboard, or raw bytes through your choice of multimodal model.",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "llm-vision-mcp": "dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsx src/index.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "clean": "node -e \"fs.rmSync('dist',{recursive:true,force:true})\""
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "vision",
+    "multimodal",
+    "llm",
+    "agent",
+    "ocr",
+    "claude-code",
+    "opencode",
+    "codex"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.0",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0",
+    "vitest": "^4.1.0"
+  },
+  "allowScripts": {
+    "esbuild@0.28.1": true
+  }
+}
