@@ -93,6 +93,25 @@ Then guide them through the config for their platform (from the repo's
   ```
 - **Kimi Code / others** — same `npx -y mcp-vision-bridge` stdio pattern.
 
+- **Reasonix** — uses the same `.mcp.json` `mcpServers` format as Claude Code.
+  Add the `vision` server to your project `.mcp.json`:
+  ```json
+  {
+    "mcpServers": {
+      "vision": {
+        "command": "npx",
+        "args": ["-y", "mcp-vision-bridge"],
+        "env": {
+          "VISION_OPENAI_BASE_URL": "<endpoint>",
+          "VISION_OPENAI_API_KEY": "<key>",
+          "VISION_MODEL": "<model>"
+        }
+      }
+    }
+  }
+  ```
+  Pasted images land in `.reasonix/attachments/` — `image="recent"` finds them.
+
 - **Cowork / Claude-3p desktop** — register into
   `%LOCALAPPDATA%\Claude-3p\claude_desktop_config.json` (same `mcpServers`
   object form as Claude Code). Cowork saves pasted images to real files
@@ -147,6 +166,16 @@ Check in this order:
 4. **Nothing resolved yet** — you have no path, discovery found nothing, and the
    clipboard is empty. **Do NOT guess.** Ask the user to either (a) save the image
    and give a path, or (b) drag the image file into the chat — a path will appear.
+
+### What `recent` / `session` scan (auto-discovery)
+
+| Agent | On-disk location of pasted images |
+|---|---|
+| Claude Code CLI/TUI | `~/.claude/image-cache/<uuid>/N.png` (paste with **Alt+V**) |
+| Reasonix | `~/.reasonix/sessions/` + project `.reasonix/attachments/` |
+| Cowork (Claude-3p desktop) | `%LOCALAPPDATA%\Claude-3p\...\uploads\*_image.png` |
+| Codex | `~/.codex/attachments/<session>/image-*.png` |
+| Grok Build | `~/.grok/sessions/*/*/images/` |
 
 ### Calling the tool
 

@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "vision": {
+      "command": "npx",
+      "args": ["-y", "mcp-vision-bridge"],
+      "env": {
+        "VISION_OPENAI_BASE_URL": "https://opencode.ai/zen/go/v1",
+        "VISION_OPENAI_API_KEY": "<your-key>",
+        "VISION_MODEL": "mimo-v2.5"
+      }
+    }
+  }
+}

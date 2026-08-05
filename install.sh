@@ -36,6 +36,7 @@ echo "  server launch: $MCP_CMD $MCP_ARGS"
 # ---- 1. Detect platform ----
 detect_platform() {
   if command -v claude >/dev/null 2>&1; then echo "claude"
+  elif command -v reasonix >/dev/null 2>&1; then echo "reasonix"
   elif command -v codex >/dev/null 2>&1; then echo "codex"
   elif command -v opencode >/dev/null 2>&1; then echo "opencode"
   elif command -v kimi >/dev/null 2>&1; then echo "kimi"
@@ -45,7 +46,7 @@ detect_platform() {
 PLATFORM="${1:-$(detect_platform)}"
 if [ "$PLATFORM" = "unknown" ]; then
   echo "Could not auto-detect your agent. Pass it explicitly:"
-  echo "  ./install.sh claude | codex | opencode | kimi | cowork"
+  echo "  ./install.sh claude | reasonix | codex | opencode | kimi | cowork"
   exit 1
 fi
 echo "Detected platform: $PLATFORM"
@@ -87,6 +88,24 @@ case "$PLATFORM" in
     else
       echo "  → ~/.claude.json not found; register manually (see examples/claude-code.mcp.json)."
     fi
+    ;;
+  reasonix)
+    # Reasonix supports the same .mcp.json mcpServers format as Claude Code.
+    REASONIX_MCP=".mcp.json"
+    node -e '
+      const fs = require("fs");
+      const p = process.argv[1];
+      const ep = process.argv[2], key = process.argv[3], model = process.argv[4];
+      const cmd = process.argv[5], argsStr = process.argv[6];
+      let j = {};
+      try { j = JSON.parse(fs.readFileSync(p, "utf8")); } catch {}
+      j.mcpServers = j.mcpServers || {};
+      const args = argsStr ? argsStr.split(" ") : [];
+      j.mcpServers.vision = { command: cmd, args,
+        env: { VISION_OPENAI_BASE_URL: ep, VISION_OPENAI_API_KEY: key, VISION_MODEL: model } };
+      fs.writeFileSync(p, JSON.stringify(j, null, 2));
+      console.log("  → registered vision MCP in ./" + p);
+    ' "$REASONIX_MCP" "$ENDPOINT" "$API_KEY" "$MODEL" "$MCP_CMD" "$MCP_ARGS"
     ;;
   codex)
     CODEX_CONFIG="$HOME/.codex/config.toml"

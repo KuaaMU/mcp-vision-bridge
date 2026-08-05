@@ -40,14 +40,18 @@ That's it — the plugin bundles the **MCP server + vision skill + auto-loop hoo
 
 > Prefer to manage it in **cc-switch** (see it + sync to Codex/opencode/Gemini)? Use the installer below instead.
 
-### Codex / opencode / Kimi / anything else (one command)
+### Codex / Reasonix / opencode / Kimi / anything else (one command)
 
 ```bash
 git clone https://github.com/KuaaMU/mcp-vision-bridge && cd mcp-vision-bridge
 ./install.sh                     # auto-detects your agent
 ```
 
-`./install.sh claude | codex | opencode | kimi` if it doesn't auto-detect. You'll be asked for three values: **endpoint**, **key**, **model**.
+`./install.sh claude | reasonix | codex | opencode | kimi` if it doesn't auto-detect. You'll be asked for three values: **endpoint**, **key**, **model**.
+
+**Reasonix** reads the same `.mcp.json` as Claude Code, so `./install.sh reasonix`
+(or a manual `.mcp.json` with the `vision` server) works — pasted images land in
+`.reasonix/attachments/` and `image="recent"` finds them.
 
 ### Manual (no install script)
 
@@ -104,10 +108,28 @@ analyze_image(
 ```
 
 - **`image`** — local path, http(s) URL, `"clipboard"`, `"recent"` (auto-find the
-  last pasted image across Claude Code / Cowork / Codex), `"session"`, or a base64
-  data URI
+  last pasted image across Claude Code / Reasonix / Cowork / Codex), `"session"`,
+  or a base64 data URI
 - **`task`** — common jobs; `ocr` extracts text, `ui` specs a screen, etc.
 - **`prompt`** — free-form question (overrides `task`)
+
+### How pasted images are discovered
+
+Pasting an image into a coding agent stores it somewhere. `image="recent"` /
+`"session"` find it automatically — no clipboard, no manual paths:
+
+| Agent | Where pasted images land | Auto-found? |
+|---|---|---|
+| Claude Code CLI/TUI | `~/.claude/image-cache/<uuid>/N.png` (paste with **Alt+V**) | ✅ |
+| Reasonix | `~/.reasonix/sessions/` + project `.reasonix/attachments/` | ✅ |
+| Cowork (Claude-3p desktop) | `%LOCALAPPDATA%\Claude-3p\...\uploads\*_image.png` | ✅ |
+| Codex | `~/.codex/attachments/<session>/image-*.png` | ✅ |
+| Grok Build | `~/.grok/sessions/*/*/images/` | ✅ |
+
+> **Windows clipboard reality:** in Explorer, "copy file" (Ctrl+C) puts a *file
+> list* on the clipboard — not image bytes. So pasting a local image into a CLI
+> only works if you copy the image *content* (screenshot tool, browser "copy
+> image"). Otherwise just paste the file path — `analyze_image` reads it directly.
 
 ---
 
