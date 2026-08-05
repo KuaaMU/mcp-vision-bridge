@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="520" viewBox="0 0 880 520" font-family="Consolas, Menlo, monospace">
+  <!-- terminal window -->
+  <rect x="0" y="0" width="880" height="520" rx="14" fill="#1e1e2e"/>
+  <!-- title bar -->
+  <rect x="0" y="0" width="880" height="44" rx="14" fill="#313244"/>
+  <rect x="0" y="30" width="880" height="14" fill="#313244"/>
+  <circle cx="24" cy="22" r="7" fill="#f38ba8"/>
+  <circle cx="46" cy="22" r="7" fill="#fab387"/>
+  <circle cx="68" cy="22" r="7" fill="#a6e3a1"/>
+  <text x="440" y="28" text-anchor="middle" font-size="15" fill="#cdd6f4">developer@host: ~/myapp</text>
+
+  <!-- terminal content -->
+  <text x="28" y="82" font-size="17" fill="#cdd6f4">$ </text>
+  <text x="52" y="82" font-size="17" fill="#f9e2af">npm run build</text>
+
+  <text x="28" y="116" font-size="17" fill="#cba6f7">error TS2345:</text>
+  <text x="28" y="144" font-size="17" fill="#cdd6f4">  Argument of type 'string' is not assignable to</text>
+  <text x="28" y="170" font-size="17" fill="#cdd6f4">  parameter of type 'number'.</text>
+
+  <text x="28" y="206" font-size="17" fill="#f38ba8">  src/utils/parse.ts:42:18</text>
+  <text x="28" y="232" font-size="17" fill="#cdd6f4">  42 |   const id = parseInt(line, radix);</text>
+  <text x="28" y="258" font-size="17" fill="#a6e3a1">     |            ~~~~~~~</text>
+
+  <text x="28" y="294" font-size="17" fill="#cdd6f4">$ </text>
+  <text x="28" y="294" font-size="17" fill="#cdd6f4">▍</text>
+</svg>

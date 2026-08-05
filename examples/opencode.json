@@ -1,0 +1,13 @@
+{
+  "mcp": {
+    "vision": {
+      "type": "local",
+      "command": ["npx", "-y", "mcp-vision-bridge"],
+      "environment": {
+        "VISION_OPENAI_BASE_URL": "https://your-gateway/v1",
+        "VISION_OPENAI_API_KEY": "sk-your-key",
+        "VISION_MODEL": "your-vision-model"
+      }
+    }
+  }
+}

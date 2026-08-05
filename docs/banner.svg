@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="520" viewBox="0 0 1600 520">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0f172a"/>
+      <stop offset="1" stop-color="#1e1b4b"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#60a5fa"/>
+      <stop offset="1" stop-color="#a78bfa"/>
+    </linearGradient>
+  </defs>
+
+  <!-- background -->
+  <rect width="1600" height="520" fill="url(#bg)"/>
+
+  <!-- decorative dots -->
+  <g opacity="0.06">
+    <circle cx="120" cy="90" r="220" fill="#60a5fa"/>
+    <circle cx="1490" cy="420" r="280" fill="#a78bfa"/>
+  </g>
+
+  <!-- left column: title -->
+  <g transform="translate(90, 120)">
+    <text font-family="'Segoe UI', system-ui, sans-serif" font-size="86" font-weight="700" fill="#ffffff">mcp-vision-bridge</text>
+    <text font-family="'Segoe UI', system-ui, sans-serif" font-size="34" font-weight="500" fill="#94a3b8" y="70">Give your text-only LLM coding agent eyes.</text>
+
+    <!-- tagline pills -->
+    <g transform="translate(0, 120)">
+      <rect width="300" height="52" rx="26" fill="rgba(96,165,250,0.16)"/>
+      <text x="150" y="33" text-anchor="middle" font-family="'Segoe UI', system-ui, sans-serif" font-size="24" font-weight="600" fill="#60a5fa">DeepSeek V4 Flash · no eyes?</text>
+    </g>
+    <g transform="translate(320, 120)">
+      <rect width="360" height="52" rx="26" fill="rgba(167,139,250,0.16)"/>
+      <text x="180" y="33" text-anchor="middle" font-family="'Segoe UI', system-ui, sans-serif" font-size="24" font-weight="600" fill="#a78bfa">1 tool · 60s to vision</text>
+    </g>
+
+    <!-- flow -->
+    <g transform="translate(0, 210)">
+      <text font-family="'Segoe UI', system-ui, sans-serif" font-size="26" fill="#cbd5e1">screenshot  →  <tspan fill="#60a5fa">analyze_image</tspan>  →  detailed text</text>
+      <text font-family="'Segoe UI', system-ui, sans-serif" font-size="20" fill="#64748b" y="40">local · URL · clipboard · base64 · raw</text>
+    </g>
+  </g>
+
+  <!-- right column: vertical features -->
+  <g transform="translate(1150, 150)" font-family="'Segoe UI', system-ui, sans-serif">
+    <g transform="translate(0,0)">
+      <rect width="360" height="64" rx="12" fill="rgba(255,255,255,0.05)"/>
+      <circle cx="36" cy="32" r="12" fill="#60a5fa"/>
+      <text x="60" y="30" font-size="22" font-weight="600" fill="#e2e8f0">OCR · describe · UI · layout · QA</text>
+      <text x="60" y="54" font-size="17" fill="#94a3b8">task presets built in</text>
+    </g>
+    <g transform="translate(0,84)">
+      <rect width="360" height="64" rx="12" fill="rgba(255,255,255,0.05)"/>
+      <circle cx="36" cy="32" r="12" fill="#a78bfa"/>
+      <text x="60" y="30" font-size="22" font-weight="600" fill="#e2e8f0">Claude · Gemini · mimo · GPT-4o</text>
+      <text x="60" y="54" font-size="17" fill="#94a3b8">bring your own vision model</text>
+    </g>
+    <g transform="translate(0,168)">
+      <rect width="360" height="64" rx="12" fill="rgba(255,255,255,0.05)"/>
+      <circle cx="36" cy="32" r="12" fill="#34d399"/>
+      <text x="60" y="30" font-size="22" font-weight="600" fill="#e2e8f0">Claude Code · opencode · Codex · Kimi</text>
+      <text x="60" y="54" font-size="17" fill="#94a3b8">any MCP client</text>
+    </g>
+  </g>
+
+  <!-- bottom bar -->
+  <rect x="90" y="452" width="1420" height="2" fill="rgba(148,163,184,0.2)"/>
+  <text x="90" y="492" font-family="'Segoe UI', system-ui, sans-serif" font-size="20" fill="#64748b">npx -y mcp-vision-bridge</text>
+  <text x="1510" y="492" text-anchor="end" font-family="'Segoe UI', system-ui, sans-serif" font-size="20" fill="#64748b">MIT License</text>
+</svg>

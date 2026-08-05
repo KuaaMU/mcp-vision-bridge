@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "vision": {
+      "command": "npx",
+      "args": ["-y", "mcp-vision-bridge"],
+      "env": {
+        "VISION_OPENAI_BASE_URL": "https://your-gateway/v1",
+        "VISION_OPENAI_API_KEY": "sk-your-key",
+        "VISION_MODEL": "your-vision-model"
+      }
+    }
+  }
+}

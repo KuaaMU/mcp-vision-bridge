@@ -47,16 +47,51 @@ The image never reaches the agent. A complete text description does. The agent c
 
 ---
 
+## 🚀 Two-minute install (recommended)
+
+The repo ships a **one-click installer** that wires everything up: it detects your
+agent, collects your vision endpoint/key/model, stores the key as an env var,
+registers the MCP server, **and installs the `vision` skill** so your agent knows
+how to use it.
+
+```bash
+git clone https://github.com/KuaaMU/mcp-vision-bridge
+cd mcp-vision-bridge
+./install.sh                 # or: ./install.sh claude | codex | opencode | kimi
+```
+
+You'll be prompted for three things:
+- **Endpoint** — your OpenAI-compatible vision URL (e.g. `https://opencode.ai/zen/go/v1`)
+- **API key** — stored as `VISION_OPENAI_API_KEY` in your shell profile, never in JSON
+- **Model** — e.g. `mimo-v2.5`, `gpt-4o`
+
+Then **restart your agent**. Screenshot something, copy it (Ctrl+C), and say:
+*"看剪贴板，分析这个报错"* — your text-only agent will call `analyze_image` and
+describe it through the vision model.
+
+> **What's in the repo:**
+> - `src/` — the MCP server (published as `mcp-vision-bridge` on npm)
+> - `skills/vision/SKILL.md` — the **vision skill** (teaches the agent to detect
+>   missing MCP, guide install, and route images through `analyze_image`)
+> - `install.sh` — one-click installer (platform detection, env-var key, MCP config, skill copy)
+> - `examples/` — per-platform config templates (Claude Code, Codex, opencode, Kimi)
+
+---
+
 ## Quick start (60 seconds)
 
 ### 1. Install
 
 ```bash
-npm install -g mcp-vision-bridge      # global install
+npm install -g mcp-vision-bridge      # global install (recommended)
 npx -y mcp-vision-bridge              # or run without installing
 ```
 
 Requires **Node.js ≥ 18**.
+
+> **Windows note:** if an MCP client reports the server "disconnects" when launched
+> via `npx`, use the global install instead and reference the `mcp-vision-bridge`
+> command directly. v0.1.1 fixed the missing shebang that caused this.
 
 ### 2. Point it at your vision model
 
