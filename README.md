@@ -14,7 +14,7 @@ Works with **Claude Code · Codex · opencode · Kimi · PI · Cursor** and any 
 
 ## 🚀 Install (pick your agent — that's the whole setup)
 
-<img src="docs/install-decision.png" alt="Which install path to choose" width="900"/>
+<img src="docs/install-decision.svg" alt="Which install path to choose" width="900"/>
 
 ### Claude Code (one command)
 
@@ -60,7 +60,7 @@ Requires **Node.js ≥ 18**.
 
 After install, **restart your agent**, then:
 
-<img src="docs/usage-flow.png" alt="How to use: screenshot → copy → ask → done" width="900"/>
+<img src="docs/usage-flow.svg" alt="How to use: screenshot → copy → ask → done" width="900"/>
 
 1. **Screenshot something** (or copy an image with Ctrl+C)
 2. Say **"看看这个"** (or "analyze this", "what's the error?")
@@ -134,7 +134,7 @@ All via environment variables (the MCP reads them from your agent's server confi
 
 ## How it works
 
-<img src="docs/flow.png" alt="How it works: agent → bridge → vision model → text" width="900"/>
+<img src="docs/flow.svg" alt="How it works: agent → bridge → vision model → text" width="900"/>
 
 Pure text in, pure text out. The server never interprets the image — it fetches
 the bytes and lets your vision model do the seeing.
