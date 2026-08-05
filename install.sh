@@ -158,6 +158,41 @@ else
   echo "  → skill dir '$VISION_SKILL_DIR' not found; copy skills/vision manually."
 fi
 
+# ---- 5b. Auto-loop hook (Claude Code only) ----
+# UserPromptSubmit hook: when the clipboard holds an image and the user's message
+# looks like a "look at this" request, inject guidance so the agent auto-calls
+# analyze_image. This is what makes the flow feel automatic.
+if [ "$PLATFORM" = "claude" ]; then
+  echo ""
+  read -r -p "  Install the auto-loop hook (auto-detect clipboard images + guide the agent)? [Y/n] " AUTO
+  if [ "$AUTO" != "n" ] && [ "$AUTO" != "N" ]; then
+    mkdir -p "$HOME/.claude/hooks"
+    cp "$(dirname "$0")/hooks/vision-clipboard.sh" "$HOME/.claude/hooks/vision-clipboard.sh"
+    chmod +x "$HOME/.claude/hooks/vision-clipboard.sh"
+    SETTINGS="$HOME/.claude/settings.json"
+    if [ -f "$SETTINGS" ]; then
+      node -e '
+        const fs = require("fs");
+        const p = process.argv[1];
+        const j = JSON.parse(fs.readFileSync(p, "utf8"));
+        j.hooks = j.hooks || {};
+        const list = j.hooks.UserPromptSubmit || [];
+        const exists = list.some(e => JSON.stringify(e).includes("vision-clipboard"));
+        if (!exists) {
+          list.push({ hooks: [{ type: "command", command: "bash ~/.claude/hooks/vision-clipboard.sh", timeout: 10 }] });
+          j.hooks.UserPromptSubmit = list;
+          fs.writeFileSync(p, JSON.stringify(j, null, 2));
+          console.log("  → installed auto-loop hook in ~/.claude/settings.json");
+        } else {
+          console.log("  → auto-loop hook already present (skipped)");
+        }
+      ' "$SETTINGS"
+    else
+      echo "  → ~/.claude/settings.json not found; hook not installed (add manually)."
+    fi
+  fi
+fi
+
 # ---- 6. Done ----
 echo ""
 echo "=============================================="
