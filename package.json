@@ -20,6 +20,7 @@
     "dev": "tsx src/index.ts",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:e2e": "npm run build && node scripts/e2e-smoke.mjs",
     "typecheck": "tsc --noEmit",
     "clean": "node -e \"fs.rmSync('dist',{recursive:true,force:true})\""
   },
