@@ -6,9 +6,12 @@
  * finds the images a user actually pasted — newest first — across the agents
  * we support:
  *
+ *   - Cowork / Claude-3p desktop:
+ *       %LOCALAPPDATA%\Claude-3p\local-agent-mode-sessions\<acct>\00000000\local_*\uploads\<uuid>-<ts>_image.png
  *   - Codex:       ~/.codex/attachments/<session>/image-*.png|jpg
  *   - Grok Build:  ~/.grok/sessions/<cwd>/<session>/images/
- *   - Claude Code: session transcripts (*.jsonl) with base64 image blocks
+ *   - Claude Code: session transcripts (*.jsonl) with base64 image blocks,
+ *       plus our own hook snapshots under ~/.claude/vision-paste/
  *
  * The caller (analyze_image with image="recent" / "session") uses these to
  * analyze pasted screenshots reliably, including multiple images.
@@ -37,6 +40,13 @@ function homeDir(): string {
   return process.env.USERPROFILE ?? process.env.HOME ?? os.homedir();
 }
 
+/** LocalAppData on Windows, else ~/.local/share (XDG data home). */
+function localAppDataDir(): string {
+  if (process.env.LOCALAPPDATA) return process.env.LOCALAPPDATA;
+  const home = homeDir();
+  return path.join(home, ".local", "share");
+}
+
 /** Scan a directory tree for image files, newest first. */
 async function scanDirForImages(
   root: string,
@@ -59,6 +69,46 @@ async function scanDirForImages(
         try {
           const st = await fs.stat(full);
           out.push({ source: `${sourceLabel}:${e.name}`, filePath: full, mtimeMs: st.mtimeMs });
+        } catch {
+          /* skip unreadable */
+        }
+      }
+    }
+  }
+  await walk(root);
+  return out.sort((a, b) => b.mtimeMs - a.mtimeMs).slice(0, limit);
+}
+
+/**
+ * Scan Cowork / Claude-3p desktop pasted-image files.
+ * Each desktop session writes pasted images to:
+ *   %LOCALAPPDATA%\Claude-3p\local-agent-mode-sessions\<acct>\00000000\local_*\uploads\<uuid>-<ts>_image.png
+ * Only `uploads/` dirs are scanned — the sibling `outputs/` holds agent-generated
+ * previews, which must NOT be mistaken for user pastes.
+ */
+async function scanCoworkUploads(limit: number): Promise<DiscoveredImage[]> {
+  const root = path.join(
+    localAppDataDir(),
+    "Claude-3p",
+    "local-agent-mode-sessions",
+  );
+  const out: DiscoveredImage[] = [];
+  async function walk(dir: string) {
+    let entries;
+    try {
+      entries = await fs.readdir(dir, { withFileTypes: true });
+    } catch {
+      return;
+    }
+    for (const e of entries) {
+      const full = path.join(dir, e.name);
+      if (e.isDirectory()) {
+        // Descend into everything except `outputs` (agent-generated previews).
+        if (e.name !== "outputs") await walk(full);
+      } else if (e.isFile() && IMAGE_EXT.test(e.name) && e.name.includes("_image.")) {
+        try {
+          const st = await fs.stat(full);
+          out.push({ source: `cowork:uploads:${e.name}`, filePath: full, mtimeMs: st.mtimeMs });
         } catch {
           /* skip unreadable */
         }
@@ -139,15 +189,18 @@ export async function findRecentImages(
   const all: DiscoveredImage[] = [];
   const home = homeDir();
 
-  // 1. Codex attachments: ~/.codex/attachments/<session>/image-*.png
+  // 1. Cowork / Claude-3p desktop pasted images (real files, no clipboard).
+  all.push(...(await scanCoworkUploads(limit)));
+
+  // 2. Codex attachments: ~/.codex/attachments/<session>/image-*.png
   const codexRoot = path.join(home, ".codex", "attachments");
   all.push(...(await scanDirForImages(codexRoot, "codex", limit)));
 
-  // 2. Grok Build session images: ~/.grok/sessions/*/*/images/
+  // 3. Grok Build session images: ~/.grok/sessions/*/*/images/
   const grokRoot = path.join(home, ".grok", "sessions");
   all.push(...(await scanDirForImages(grokRoot, "grok", limit)));
 
-  // 3. Claude Code transcripts (base64 image blocks)
+  // 4. Claude Code transcripts (base64 image blocks)
   if (opts.includeClaudeTranscript !== false) {
     const transcripts = await findRecentTranscripts(2);
     for (const t of transcripts) {
@@ -160,8 +213,7 @@ export async function findRecentImages(
     }
   }
 
-  // 4. Our own hook snapshots are already under Claude transcripts via the
-  //    injected text; also scan vision-paste as a fallback.
+  // 5. Our own hook snapshots (transcript extraction fallback).
   const pasteRoot = path.join(home, ".claude", "vision-paste");
   all.push(...(await scanDirForImages(pasteRoot, "vision-paste", limit)));
 

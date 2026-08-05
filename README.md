@@ -75,13 +75,14 @@ After install, **restart your agent**, then:
 
 <img src="docs/usage-flow.svg" alt="How to use: screenshot → copy → ask → done" width="900"/>
 
-1. **Screenshot something** (or copy an image with Ctrl+C)
+1. **Paste an image** (Ctrl+V in Claude Code / Cowork, or drag a file in)
 2. Say **"看看这个"** (or "analyze this", "what's the error?")
 3. Your agent calls `analyze_image` → the vision model describes it in detail
 
-The auto-loop hook (Claude Code) snapshots your clipboard automatically, so
-pasting a screenshot + asking is all it takes. For other agents, give a file
-path or say "看剪贴板".
+Paste 3 images? All 3 are captured (the hook reads your session transcript —
+lossless, multi-image — no clipboard). The auto-loop hook (Claude Code) makes
+"paste + ask" enough. Cowork and Codex save pasted images to files automatically;
+`image="recent"` finds them. For other agents, give a file path.
 
 ### The one tool
 
@@ -89,7 +90,7 @@ path or say "看剪贴板".
 
 ```
 analyze_image(
-  image   = "path | URL | clipboard | data:URI",
+  image   = "path | URL | clipboard | recent | session | data:URI",
   task    = "describe | ocr | ui | layout | qa",   // or use prompt:
   prompt  = "What error is on screen?",
   detail  = "high" | "low",
@@ -97,7 +98,9 @@ analyze_image(
 )
 ```
 
-- **`image`** — local path, http(s) URL, `"clipboard"`, or a base64 data URI
+- **`image`** — local path, http(s) URL, `"clipboard"`, `"recent"` (auto-find the
+  last pasted image across Claude Code / Cowork / Codex), `"session"`, or a base64
+  data URI
 - **`task`** — common jobs; `ocr` extracts text, `ui` specs a screen, etc.
 - **`prompt`** — free-form question (overrides `task`)
 
@@ -122,7 +125,7 @@ Three parts that close the loop for a text-only agent:
 
 - **MCP tool** (`analyze_image`) — the capability. Sends pixels to your vision model, returns text.
 - **Skill** (`skills/vision/`) — the guidance. Tells the agent *when* and *how* to call it.
-- **Hook** (`UserPromptSubmit`) — the automation. Detects a pasted image and triggers the call for you.
+- **Hook** (`UserPromptSubmit`) — the automation. Captures a pasted image from the session transcript and triggers the call for you.
 
 Install them all with the plugin (Claude Code) or `install.sh` (any agent).
 

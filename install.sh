@@ -45,7 +45,7 @@ detect_platform() {
 PLATFORM="${1:-$(detect_platform)}"
 if [ "$PLATFORM" = "unknown" ]; then
   echo "Could not auto-detect your agent. Pass it explicitly:"
-  echo "  ./install.sh claude | codex | opencode | kimi"
+  echo "  ./install.sh claude | codex | opencode | kimi | cowork"
   exit 1
 fi
 echo "Detected platform: $PLATFORM"
@@ -148,16 +148,17 @@ if [ "$PLATFORM" = "claude" ]; then
 fi
 
 # ---- 5b. Auto-loop hook (Claude Code only) ----
-# UserPromptSubmit hook: when the clipboard holds an image and the user's message
-# looks like a "look at this" request, inject guidance so the agent auto-calls
-# analyze_image. This is what makes the flow feel automatic.
+# UserPromptSubmit hook: extracts images the user pasted (from the session
+# transcript — lossless, multi-image) plus drag-dropped file paths from the
+# prompt, and injects the paths so the agent auto-calls analyze_image.
 if [ "$PLATFORM" = "claude" ]; then
   echo ""
-  read -r -p "  Install the auto-loop hook (auto-detect clipboard images + guide the agent)? [Y/n] " AUTO
+  read -r -p "  Install the auto-loop hook (auto-capture pasted images + guide the agent)? [Y/n] " AUTO
   if [ "$AUTO" != "n" ] && [ "$AUTO" != "N" ]; then
     mkdir -p "$HOME/.claude/hooks"
     cp "$(dirname "$0")/hooks/vision-clipboard.sh" "$HOME/.claude/hooks/vision-clipboard.sh"
-    chmod +x "$HOME/.claude/hooks/vision-clipboard.sh"
+    cp "$(dirname "$0")/hooks/vision-capture.mjs" "$HOME/.claude/hooks/vision-capture.mjs"
+    chmod +x "$HOME/.claude/hooks/vision-clipboard.sh" "$HOME/.claude/hooks/vision-capture.mjs"
     SETTINGS="$HOME/.claude/settings.json"
     if [ -f "$SETTINGS" ]; then
       node -e '
@@ -168,7 +169,7 @@ if [ "$PLATFORM" = "claude" ]; then
         const list = j.hooks.UserPromptSubmit || [];
         const exists = list.some(e => JSON.stringify(e).includes("vision-clipboard"));
         if (!exists) {
-          list.push({ hooks: [{ type: "command", command: "bash ~/.claude/hooks/vision-clipboard.sh", timeout: 10 }] });
+          list.push({ hooks: [{ type: "command", command: "bash ~/.claude/hooks/vision-clipboard.sh", timeout: 15 }] });
           j.hooks.UserPromptSubmit = list;
           fs.writeFileSync(p, JSON.stringify(j, null, 2));
           console.log("  → installed auto-loop hook in ~/.claude/settings.json");
@@ -182,12 +183,40 @@ if [ "$PLATFORM" = "claude" ]; then
   fi
 fi
 
+# ---- 5c. Cowork / Claude-3p desktop (optional) ----
+# Cowork (Claude-3p desktop) uses the same text-only model, so it also needs the
+# vision MCP. It saves pasted images to real files automatically (no hook needed);
+# analyze_image(image="recent"/"session") discovers them. Register the MCP server
+# into %LOCALAPPDATA%\Claude-3p\claude_desktop_config.json with a backup.
+if [ "$PLATFORM" = "cowork" ] || [ -n "$COWORK_INSTALL" ]; then
+  COWORK_CONFIG="${LOCALAPPDATA:-$HOME/AppData/Local}/Claude-3p/claude_desktop_config.json"
+  if [ -f "$COWORK_CONFIG" ]; then
+    cp "$COWORK_CONFIG" "$COWORK_CONFIG.bak.$(date +%Y%m%d-%H%M%S)"
+    node -e '
+      const fs = require("fs");
+      const p = process.argv[1];
+      const ep = process.argv[2], key = process.argv[3], model = process.argv[4];
+      const cmd = process.argv[5], argsStr = process.argv[6];
+      const j = JSON.parse(fs.readFileSync(p, "utf8"));
+      j.mcpServers = j.mcpServers || {};
+      const args = argsStr ? argsStr.split(" ") : [];
+      j.mcpServers.vision = { command: cmd, args, env: { VISION_OPENAI_BASE_URL: ep, VISION_OPENAI_API_KEY: key, VISION_MODEL: model } };
+      fs.writeFileSync(p, JSON.stringify(j, null, 2));
+      console.log("  → registered vision MCP in Cowork config (backed up)");
+    ' "$COWORK_CONFIG" "$ENDPOINT" "$API_KEY" "$MODEL" "$MCP_CMD" "$MCP_ARGS"
+  else
+    echo "  → Cowork config not found; skip or set COWORK_INSTALL=1 with correct path."
+  fi
+fi
+
 # ---- 6. Done ----
 echo ""
 echo "=============================================="
 echo " Done. Now:"
 echo "  1. Restart your $PLATFORM session (so the MCP server and skill load)."
-echo "  2. Screenshot an error, copy it (Ctrl+C), and tell your agent:"
-echo "       \"看剪贴板，分析这个报错\""
+echo "  2. Paste a screenshot (or drag an image) and tell your agent:"
+echo "       \"看看这张图，分析这个报错\""
 echo "  3. The agent will call analyze_image through the vision model."
+echo "  Tip: analyze_image(image=\"recent\") auto-finds the image you pasted in"
+echo "       Claude Code, Cowork, or Codex — no clipboard needed."
 echo "=============================================="

@@ -33,19 +33,22 @@ cd mcp-vision-bridge   # wherever the repo is cloned
 ```
 
 The installer will:
-1. Detect the agent platform (Claude Code / Codex / opencode / Kimi Code).
+1. Detect the agent platform (Claude Code / Codex / opencode / Kimi Code / Cowork).
 2. Prompt for the vision model endpoint, API key, and model name.
-3. Write the API key into the shell profile (env var) — NOT into config files.
+3. Write the API key into the MCP server config env (NOT into shell profiles).
 4. Write the MCP server config into the platform's config file.
 5. Copy this skill into place.
 6. Optionally install the **auto-loop hook** (Claude Code): a UserPromptSubmit
-   hook that snapshots any clipboard image to a session-isolated file whenever
-   you submit a message, so pasted screenshots are captured automatically.
-7. Print "restart your agent" instructions.
+   hook that captures every image the user pastes (from the session transcript —
+   lossless, multi-image) and drag-dropped file paths from the prompt, so pasted
+   screenshots are captured automatically. No clipboard dependency.
+7. Optionally register the MCP server into **Cowork** (Claude-3p desktop), which
+   saves pasted images to files automatically and needs no hook.
+8. Print "restart your agent" instructions.
 
 > **If a `[vision-bridge]` system message appears in your context**, that's the
-> auto-loop hook firing: the user copied an image and wants you to look at it.
-> Follow it — call `analyze_image` with the snapshot path it gives you.
+> auto-loop hook firing: the user pasted an image and wants you to look at it.
+> Follow it — call `analyze_image` with the paths it gives you.
 
 **A2. Manual path — no repo on machine:**
 
@@ -90,6 +93,11 @@ Then guide them through the config for their platform (from the repo's
   ```
 - **Kimi Code / others** — same `npx -y mcp-vision-bridge` stdio pattern.
 
+- **Cowork / Claude-3p desktop** — register into
+  `%LOCALAPPDATA%\Claude-3p\claude_desktop_config.json` (same `mcpServers`
+  object form as Claude Code). Cowork saves pasted images to real files
+  automatically — no hook needed; `image="recent"` discovers them.
+
 > **Security:** prefer storing the API key in an env var
 > (`export VISION_OPENAI_API_KEY=...` in `~/.bashrc` / `~/.zshrc` / PowerShell
 > profile) rather than pasting it into JSON configs, so it is not committed or
@@ -115,22 +123,22 @@ Check in this order:
    transcript/session. Use auto-discovery:
    - `image="recent"` → analyze the most recently pasted image.
    - `image="session"` → list/analyze images pasted in this session.
-   → The tool scans Codex attachments, Grok session images, and Claude
-   transcripts automatically. No clipboard dependency.
+   → The tool scans Cowork desktop uploads, Codex attachments, Grok session
+   images, and Claude transcripts automatically. No clipboard dependency.
 
 3. **The image is on the system clipboard** — a screenshot was just taken, or the
    user copied an image (Ctrl+C). This is a fast path for "look at my screen".
    → Call `analyze_image(image="clipboard", ...)`.
 
 4. **The user pasted an image and you got `[Unsupported Image]`** — you have the
-   placeholder but no path. Use `image="recent"` to find it, or ask the user to
-   save it to a file / copy to clipboard.
+   placeholder but no path. Use `image="recent"` to find it (the hook saves it to
+   a file), or ask the user to save it to a file / copy to clipboard.
 
 ### Calling the tool
 
 ```
 analyze_image(
-  image   = "<path | URL | clipboard | data URI>",
+  image   = "<path | URL | clipboard | recent | session | data URI>",
   task    = "describe" | "ocr" | "ui" | "layout" | "qa",   // or
   prompt  = "<your specific question>",                     // free-form overrides task
   detail  = "high" (default) | "low",
@@ -153,7 +161,7 @@ get a path + summary instead of a huge blob in context.
 
 | User intent | What you do |
 |---|---|
-| "看看这个截图 / 分析这个报错" | If path given → analyze it. If not, ask them to save it or copy to clipboard, then `analyze_image`. |
+| "看看这个截图 / 分析这个报错" | If path given → analyze it. Else `image="recent"` auto-finds the pasted image, then analyze. |
 | "这个 UI 怎么样 / 描述下这个页面" | `analyze_image(task="ui")`. |
 | "把这段文字提取出来 / OCR" | `analyze_image(task="ocr")`. |
 | "这张图里是什么？" | `analyze_image(task="describe")` or `qa` with a `prompt`. |
