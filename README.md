@@ -132,6 +132,20 @@ All via environment variables (the MCP reads them from your agent's server confi
 
 ---
 
+## Architecture
+
+<img src="docs/architecture.svg" alt="Project architecture: MCP tool + skill + hook" width="900"/>
+
+Three parts that close the loop for a text-only agent:
+
+- **MCP tool** (`analyze_image`) — the capability. Sends pixels to your vision model, returns text.
+- **Skill** (`skills/vision/`) — the guidance. Tells the agent *when* and *how* to call it.
+- **Hook** (`UserPromptSubmit`) — the automation. Detects a pasted image and triggers the call for you.
+
+Install them all with the plugin (Claude Code) or `install.sh` (any agent).
+
+---
+
 ## How it works
 
 <img src="docs/flow.svg" alt="How it works: agent → bridge → vision model → text" width="900"/>

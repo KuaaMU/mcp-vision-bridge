@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="520" viewBox="0 0 1100 520" font-family="'Segoe UI', system-ui, sans-serif">
+  <!-- background -->
+  <rect width="1100" height="520" fill="#0f172a" rx="16"/>
+
+  <!-- title -->
+  <text x="550" y="44" text-anchor="middle" font-size="26" font-weight="700" fill="#e2e8f0">mcp-vision-bridge — three parts, one loop</text>
+  <text x="550" y="70" text-anchor="middle" font-size="14" fill="#94a3b8">tool + guidance + automation, so a text-only agent can see</text>
+
+  <!-- ============ MCP tool (left) ============ -->
+  <rect x="40" y="100" width="320" height="380" rx="16" fill="#1e293b" stroke="#60a5fa" stroke-width="2.5"/>
+  <text x="200" y="134" text-anchor="middle" font-size="21" font-weight="700" fill="#60a5fa">📦 MCP tool</text>
+  <text x="200" y="158" text-anchor="middle" font-size="13" fill="#94a3b8">the capability</text>
+
+  <rect x="70" y="180" width="260" height="90" rx="10" fill="rgba(96,165,250,0.12)"/>
+  <text x="200" y="212" text-anchor="middle" font-family="Consolas, Menlo, monospace" font-size="15" fill="#a5f3fc">analyze_image</text>
+  <text x="200" y="238" text-anchor="middle" font-size="13" fill="#93c5fd">sends pixels to your vision model</text>
+  <text x="200" y="258" text-anchor="middle" font-size="12" fill="#64748b">mimo · Claude · Gemini · GPT-4o</text>
+
+  <text x="80" y="310" font-size="13" fill="#94a3b8">• path / URL / clipboard / data:URI</text>
+  <text x="80" y="334" font-size="13" fill="#94a3b8">• describe · ocr · ui · layout · qa</text>
+  <text x="80" y="358" font-size="13" fill="#94a3b8">• returns exhaustive text</text>
+  <text x="80" y="382" font-size="13" fill="#94a3b8">• save_to for long output</text>
+
+  <rect x="70" y="410" width="260" height="46" rx="8" fill="rgba(96,165,250,0.08)"/>
+  <text x="200" y="439" text-anchor="middle" font-size="13" fill="#93c5fd">what the agent actually calls</text>
+
+  <!-- ============ Skill (center) ============ -->
+  <rect x="390" y="100" width="320" height="380" rx="16" fill="#1e293b" stroke="#34d399" stroke-width="2.5"/>
+  <text x="550" y="134" text-anchor="middle" font-size="21" font-weight="700" fill="#34d399">🧠 Skill</text>
+  <text x="550" y="158" text-anchor="middle" font-size="13" fill="#94a3b8">the guidance</text>
+
+  <rect x="420" y="180" width="260" height="90" rx="10" fill="rgba(52,211,153,0.12)"/>
+  <text x="550" y="212" text-anchor="middle" font-family="Consolas, Menlo, monospace" font-size="15" fill="#a7f3d0">skills/vision/SKILL.md</text>
+  <text x="550" y="238" text-anchor="middle" font-size="13" fill="#6ee7b7">teaches the agent when &amp; how</text>
+  <text x="550" y="258" text-anchor="middle" font-size="12" fill="#64748b">loads automatically with the plugin</text>
+
+  <text x="420" y="310" font-size="13" fill="#94a3b8">• detects [Unsupported Image]</text>
+  <text x="420" y="334" font-size="13" fill="#94a3b8">• picks image source</text>
+  <text x="420" y="358" font-size="13" fill="#94a3b8">• guides install if missing</text>
+  <text x="420" y="382" font-size="13" fill="#94a3b8">• error handling conventions</text>
+
+  <rect x="420" y="410" width="260" height="46" rx="8" fill="rgba(52,211,153,0.08)"/>
+  <text x="550" y="439" text-anchor="middle" font-size="13" fill="#6ee7b7">what the agent knows</text>
+
+  <!-- ============ Hook (right) ============ -->
+  <rect x="740" y="100" width="320" height="380" rx="16" fill="#1e293b" stroke="#a78bfa" stroke-width="2.5"/>
+  <text x="900" y="134" text-anchor="middle" font-size="21" font-weight="700" fill="#a78bfa">⚡ Hook</text>
+  <text x="900" y="158" text-anchor="middle" font-size="13" fill="#94a3b8">the automation</text>
+
+  <rect x="770" y="180" width="260" height="90" rx="10" fill="rgba(167,139,250,0.12)"/>
+  <text x="900" y="212" text-anchor="middle" font-family="Consolas, Menlo, monospace" font-size="15" fill="#ddd6fe">UserPromptSubmit</text>
+  <text x="900" y="238" text-anchor="middle" font-size="13" fill="#c4b5fd">watches the clipboard</text>
+  <text x="900" y="258" text-anchor="middle" font-size="12" fill="#64748b">fires when you paste + ask</text>
+
+  <text x="770" y="310" font-size="13" fill="#94a3b8">• snapshots clipboard image</text>
+  <text x="770" y="334" font-size="13" fill="#94a3b8">• injects the file path</text>
+  <text x="770" y="358" font-size="13" fill="#94a3b8">• tells agent to analyze</text>
+  <text x="770" y="382" font-size="13" fill="#94a3b8">• self-exempts for multimodal</text>
+
+  <rect x="770" y="410" width="260" height="46" rx="8" fill="rgba(167,139,250,0.08)"/>
+  <text x="900" y="439" text-anchor="middle" font-size="13" fill="#c4b5fd">what the agent doesn't have to do</text>
+</svg>
