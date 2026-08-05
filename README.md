@@ -62,7 +62,7 @@ Requires **Node.js ≥ 18**.
 
 Everything is configured by **environment variables** — the MCP reads them from the agent's server config, so you only ever set them once. Keys never appear in tool arguments.
 
-**OpenAI-compatible** (OpenRouter · OpenCode GO · any gateway · **mimo v2.5**) — the default:
+**OpenAI-compatible** — the most common gateway format (OpenRouter · OpenCode GO · DeepSeek/Volcengine gateways · local emulators). **You must set your own endpoint, key, and model** — nothing here works without them:
 
 | Variable | Purpose |
 |---|---|
@@ -79,8 +79,45 @@ Full variable table [below](#configuration-reference).
 
 Pick your platform. The agent immediately gains `analyze_image`.
 
+> In every config below, replace **`https://your-gateway/v1`**, **`sk-your-key`**, and **`your-vision-model`** with your own endpoint, key, and model. There is no built-in default.
+
 <details>
-<summary><b>Claude Code</b> — <code>.mcp.json</code> or <code>claude mcp add</code></summary>
+<summary><b>Claude Code — GUI (cc-switch) · TUI · or <code>.mcp.json</code></b></summary>
+
+**Option A — cc-switch (GUI, recommended for most users):**
+
+1. Open **cc-switch** → click **「MCP」** in the top nav → **「+」**
+2. Fill in (transport `stdio`):
+   | Field | Value |
+   |---|---|
+   | Server ID | `vision` |
+   | Transport | `stdio` |
+   | Command | `npx` |
+   | Args | `["-y", "mcp-vision-bridge"]` |
+   | Env | see below |
+3. Save, then toggle **「Claude」** on (writes to `~/.claude.json`)
+4. Restart Claude Code
+
+```json
+{
+  "VISION_PROVIDER": "openai",
+  "VISION_OPENAI_BASE_URL": "https://your-gateway/v1",
+  "VISION_OPENAI_API_KEY": "sk-your-key",
+  "VISION_MODEL": "your-vision-model"
+}
+```
+
+**Option B — Claude Code TUI (`claude mcp add`):**
+
+```bash
+claude mcp add vision -- \
+  npx -y mcp-vision-bridge \
+  -e VISION_OPENAI_BASE_URL=https://your-gateway/v1 \
+  -e VISION_OPENAI_API_KEY=sk-your-key \
+  -e VISION_MODEL=your-vision-model
+```
+
+**Option C — project `.mcp.json`:**
 
 ```json
 {
@@ -89,16 +126,14 @@ Pick your platform. The agent immediately gains `analyze_image`.
       "command": "npx",
       "args": ["-y", "mcp-vision-bridge"],
       "env": {
-        "VISION_OPENAI_BASE_URL": "https://opencode.ai/zen/go/v1",
-        "VISION_OPENAI_API_KEY": "sk-...",
-        "VISION_MODEL": "mimo-v2.5"
+        "VISION_OPENAI_BASE_URL": "https://your-gateway/v1",
+        "VISION_OPENAI_API_KEY": "sk-your-key",
+        "VISION_MODEL": "your-vision-model"
       }
     }
   }
 }
 ```
-
-Or: `claude mcp add vision -- npx -y mcp-vision-bridge`
 </details>
 
 <details>
@@ -111,9 +146,9 @@ Or: `claude mcp add vision -- npx -y mcp-vision-bridge`
       "type": "local",
       "command": ["npx", "-y", "mcp-vision-bridge"],
       "environment": {
-        "VISION_OPENAI_BASE_URL": "https://opencode.ai/zen/go/v1",
-        "VISION_OPENAI_API_KEY": "sk-...",
-        "VISION_MODEL": "mimo-v2.5"
+        "VISION_OPENAI_BASE_URL": "https://your-gateway/v1",
+        "VISION_OPENAI_API_KEY": "sk-your-key",
+        "VISION_MODEL": "your-vision-model"
       }
     }
   }
@@ -128,7 +163,7 @@ Or: `claude mcp add vision -- npx -y mcp-vision-bridge`
 [mcp_servers.vision]
 command = "npx"
 args = ["-y", "mcp-vision-bridge"]
-env = { VISION_OPENAI_BASE_URL = "https://opencode.ai/zen/go/v1", VISION_OPENAI_API_KEY = "sk-...", VISION_MODEL = "mimo-v2.5" }
+env = { VISION_OPENAI_BASE_URL = "https://your-gateway/v1", VISION_OPENAI_API_KEY = "sk-your-key", VISION_MODEL = "your-vision-model" }
 ```
 </details>
 
@@ -142,9 +177,9 @@ env = { VISION_OPENAI_BASE_URL = "https://opencode.ai/zen/go/v1", VISION_OPENAI_
       "command": "npx",
       "args": ["-y", "mcp-vision-bridge"],
       "env": {
-        "VISION_OPENAI_BASE_URL": "https://opencode.ai/zen/go/v1",
-        "VISION_OPENAI_API_KEY": "sk-...",
-        "VISION_MODEL": "mimo-v2.5"
+        "VISION_OPENAI_BASE_URL": "https://your-gateway/v1",
+        "VISION_OPENAI_API_KEY": "sk-your-key",
+        "VISION_MODEL": "your-vision-model"
       }
     }
   }
@@ -162,9 +197,9 @@ env = { VISION_OPENAI_BASE_URL = "https://opencode.ai/zen/go/v1", VISION_OPENAI_
       "command": "npx",
       "args": ["-y", "mcp-vision-bridge"],
       "env": {
-        "VISION_OPENAI_BASE_URL": "https://opencode.ai/zen/go/v1",
-        "VISION_OPENAI_API_KEY": "sk-...",
-        "VISION_MODEL": "mimo-v2.5"
+        "VISION_OPENAI_BASE_URL": "https://your-gateway/v1",
+        "VISION_OPENAI_API_KEY": "sk-your-key",
+        "VISION_MODEL": "your-vision-model"
       }
     }
   }
@@ -201,9 +236,11 @@ The response is **plain text**, engineered to be exhaustive: every element, all 
 
 ---
 
-## Real results (mimo-v2.5, no cherry-picking)
+## Real results (example: mimo-v2.5)
 
-`llm-vision-mcp` + `mimo-v2.5` in action. One `describe` / `ocr` call each.
+`llm-vision-mcp` + `mimo-v2.5` in action — shown here as an example model.
+Yours may differ; the same `analyze_image` tool works with any vision model.
+One `describe` / `ocr` call each.
 
 ### 1 · Terminal / error analysis → `describe`
 
@@ -240,20 +277,22 @@ All four ran through the **same `analyze_image` tool**, same system prompt, zero
 
 ## Configuration reference
 
-| Variable | Required | Default | Purpose |
-|---|---|---|---|
-| `VISION_PROVIDER` | — | `openai` | `openai` \| `anthropic` \| `gemini` |
-| `VISION_MODEL` | — | `mimo-v2.5` | Model id passed to the provider |
-| `VISION_OPENAI_BASE_URL` | — | `https://api.openai.com/v1` | OpenAI-compatible base (OpenRouter / gateway / opencode GO) |
-| `VISION_OPENAI_API_KEY` | yes* | — | Key for the OpenAI-compatible endpoint |
-| `VISION_ANTHROPIC_BASE_URL` | — | `https://api.anthropic.com` | Anthropic base |
-| `VISION_ANTHROPIC_API_KEY` | yes* | — | Anthropic key |
-| `VISION_GEMINI_BASE_URL` | — | `https://generativelanguage.googleapis.com` | Gemini base |
-| `VISION_GEMINI_API_KEY` | yes* | — | Google AI Studio key |
-| `VISION_MAX_TOKENS` | — | `2048` | Vision output cap (complex screenshots → 3000+) |
-| `VISION_TIMEOUT_MS` | — | `60000` | Fetch + provider timeout |
-| `VISION_CACHE_DIR` | — | (memory only) | On-disk image cache dir |
-| `VISION_BLOCK_PRIVATE_URLS` | — | `false` | `true` blocks localhost/private URL fetches |
+| Variable | Required | Purpose |
+|---|---|---|
+| `VISION_PROVIDER` | optional | `openai` \| `anthropic` \| `gemini` |
+| `VISION_MODEL` | **yes** | Vision model id — e.g. `mimo-v2.5`, `gpt-4o`, `qwen-vl-max`, `gemini-2.0-flash` |
+| `VISION_OPENAI_BASE_URL` | **yes** | Your OpenAI-compatible endpoint (OpenRouter / OpenCode GO / gateway / local) |
+| `VISION_OPENAI_API_KEY` | **yes*** | Key for that endpoint |
+| `VISION_ANTHROPIC_BASE_URL` | **yes*** | Anthropic base |
+| `VISION_ANTHROPIC_API_KEY` | **yes*** | Anthropic key |
+| `VISION_GEMINI_BASE_URL` | **yes*** | Gemini base |
+| `VISION_GEMINI_API_KEY` | **yes*** | Google AI Studio key |
+| `VISION_MAX_TOKENS` | optional | `2048` — Vision output cap (complex screenshots → 3000+) |
+| `VISION_TIMEOUT_MS` | optional | `60000` — Fetch + provider timeout |
+| `VISION_CACHE_DIR` | optional | (memory only) — On-disk image cache dir |
+| `VISION_BLOCK_PRIVATE_URLS` | optional | `false` — `true` blocks localhost/private URL fetches |
+
+\* Required only when that provider is selected. **Always set your own endpoint, key, and model** — there are no working defaults.
 
 \* Required only when that provider is selected.
 
@@ -330,6 +369,6 @@ scripts/
 
 **DeepSeek writes the code. `llm-vision-mcp` reads the screen.**
 
-[GitHub](https://github.com/KuaaMU/llm-vision-mcp) · [Issues](https://github.com/KuaaMU/llm-vision-mcp/issues) · ⭐ Star it if it's useful
+[GitHub](https://github.com/KuaaMU/mcp-vision-bridge) · [Issues](https://github.com/KuaaMU/mcp-vision-bridge/issues) · ⭐ Star it if it's useful
 
 </div>
