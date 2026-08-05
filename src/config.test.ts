@@ -34,7 +34,7 @@ describe("loadConfig", () => {
   it("reads numeric options with fallbacks", () => {
     const cfg = loadConfig({ VISION_MAX_TOKENS: "5000" } as NodeJS.ProcessEnv);
     expect(cfg.maxTokens).toBe(5000);
-    expect(cfg.timeoutMs).toBe(30_000);
+    expect(cfg.timeoutMs).toBe(90_000);
   });
 
   it("defaults base URLs per provider", () => {

@@ -52,9 +52,12 @@ SESSION_ID="${SESSION_ID:-$$}"
 WIN_HOME="${USERPROFILE:-$HOME}"
 # Normalize to forward slashes so the injected path works on every platform.
 WIN_HOME_FS="$(printf '%s' "$WIN_HOME" | sed 's|\\|/|g')"
-PASTE_DIR="${VISION_PASTE_DIR:-$WIN_HOME_FS/.claude/vision-paste}"
+# Base paste dir; each session gets its own subdirectory so snapshots from
+# different sessions never mix.
+PASTE_ROOT="${VISION_PASTE_DIR:-$WIN_HOME_FS/.claude/vision-paste}"
+PASTE_DIR="$PASTE_ROOT/$SESSION_ID"
 mkdir -p "$PASTE_DIR"
-OUTFILE="$PASTE_DIR/paste-${SESSION_ID}-$(date +%Y%m%d-%H%M%S).png"
+OUTFILE="$PASTE_DIR/paste-$(date +%Y%m%d-%H%M%S).png"
 
 OS="$(uname -s 2>/dev/null || echo 'unknown')"
 case "$OS" in

@@ -62,7 +62,7 @@ export function loadConfig(envVars: NodeJS.ProcessEnv = process.env): Config {
     maxTokens: intEnv(envVars.VISION_MAX_TOKENS, 2048),
     cacheDir: envVars.VISION_CACHE_DIR ?? null,
     clipboardDir: envVars.VISION_CLIPBOARD_DIR ?? defaultClipboardDir(),
-    timeoutMs: intEnv(envVars.VISION_TIMEOUT_MS, 30_000),
+    timeoutMs: intEnv(envVars.VISION_TIMEOUT_MS, 90_000),
     blockPrivateUrls: envVars.VISION_BLOCK_PRIVATE_URLS === "true",
     serverHomepage: "https://github.com/KuaaMU/llm-vision-mcp",
   };
