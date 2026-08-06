@@ -98,21 +98,20 @@ Interpret and respond:
 
 ## The auto-loop hook (Claude Code)
 
-When the user pastes an image (or drags a file in), a `UserPromptSubmit` hook
-reads the session transcript, captures every newly-pasted image to a file, and
-injects context like:
+When the user pastes images into a message, a `UserPromptSubmit` hook detects
+them and injects a hint like:
 
 ```
-[vision-bridge] The user pasted 3 image(s). They have been captured and saved to these files:
-  <path-1>
-  <path-2>
-  <path-3>
+[vision-bridge] The user pasted 3 image(s) in this message. Call analyze_image
+with image="session" ... Do not loop per-image — pass them all at once.
 ```
 
-If you see that, call `analyze_image` with the paths (or `image="recent"` for
-the most recent). If you (the model) can already see images directly, ignore the
-hint and analyze natively. In Cowork and Codex, pasted images are saved to files
-automatically — the same `image="recent"`/`"session"` discovery finds them.
+If you see that, call `analyze_image(image="session", ...)` — it reads the
+current session's transcript and analyzes ALL pasted images in one call (no
+snapshot, no lag, no per-image loop). If you (the model) can already see images
+directly, ignore the hint and analyze natively. In Cowork and Codex, pasted
+images are saved to files automatically — the same `image="session"` discovery
+finds them.
 
 ## Environment variables (how the server is configured)
 

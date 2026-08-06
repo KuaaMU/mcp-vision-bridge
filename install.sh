@@ -167,12 +167,12 @@ if [ "$PLATFORM" = "claude" ]; then
 fi
 
 # ---- 5b. Auto-loop hook (Claude Code only) ----
-# UserPromptSubmit hook: extracts images the user pasted (from the session
-# transcript — lossless, multi-image) plus drag-dropped file paths from the
-# prompt, and injects the paths so the agent auto-calls analyze_image.
+# UserPromptSubmit hook: detects when the user pasted images this message and
+# guides the agent to call analyze_image(image="session") — which reads the
+# session transcript directly and analyzes all pasted images in one call.
 if [ "$PLATFORM" = "claude" ]; then
   echo ""
-  read -r -p "  Install the auto-loop hook (auto-capture pasted images + guide the agent)? [Y/n] " AUTO
+  read -r -p "  Install the auto-loop hook (detect pasted images + guide the agent)? [Y/n] " AUTO
   if [ "$AUTO" != "n" ] && [ "$AUTO" != "N" ]; then
     mkdir -p "$HOME/.claude/hooks"
     cp "$(dirname "$0")/hooks/vision-clipboard.sh" "$HOME/.claude/hooks/vision-clipboard.sh"

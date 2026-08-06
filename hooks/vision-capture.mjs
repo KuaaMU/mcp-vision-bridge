@@ -1,49 +1,38 @@
 #!/usr/bin/env node
 /**
- * vision-capture — extract images pasted into a Claude Code session from the
- * session transcript, and image file paths from the submitted prompt.
+ * vision-capture — detect whether the user pasted images into the current
+ * message, for the auto-loop hook.
  *
- * Replaces the old clipboard-snapshot approach. The OS clipboard can hold only
- * ONE image, so pasting 3 images lost 2, and copying text afterward erased the
- * only snapshot. Claude Code writes every pasted image as a base64 block in the
- * session transcript (lossless, multi-image), so we read the transcript instead.
+ * This is a DETECTOR, not a snapshotter. Snapshotting to vision-paste was
+ * unreliable: the session transcript is written asynchronously, so reading it
+ * at UserPromptSubmit time lagged one batch behind and injected stale images.
+ * Instead we only answer "did the user paste images this message?", and the
+ * hook tells the agent to call analyze_image(image="session") — which reads the
+ * transcript at CALL time (by then it is written) and returns every pasted
+ * image, accurately and without lag.
+ *
+ * Signal sources (in order of reliability):
+ *   1. `[Image #N]` markers in the submitted prompt (the current message's
+ *      placeholders — zero lag, zero cross-message confusion).
+ *   2. The session transcript contains image blocks (fallback when markers
+ *      aren't in the prompt field).
  *
  * Input:  UserPromptSubmit hook JSON on stdin (fields: transcript_path,
  *         session_id, prompt).
- * Output: JSON on stdout — {"images":[{"path","source"}]}. Only images that are
- *         NEW since the last run are included (dedup by sha1). Empty images =
- *         nothing new, caller stays silent.
+ * Output: JSON on stdout — {"imageCount": <int>} where 0 = no images this
+ *         message. The wrapper stays silent when imageCount is 0.
  *
  * Install: see hooks/vision-clipboard.sh (the wrapper that invokes this script).
  * Runtime: plain Node >= 18, zero dependencies, self-contained (does NOT import
  *          the built dist/ — hooks must not depend on build artifacts).
  */
-import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-
-const MIME_EXT = {
-  "image/png": "png",
-  "image/jpeg": "jpg",
-  "image/jpg": "jpg",
-  "image/webp": "webp",
-  "image/gif": "gif",
-};
 
 /** Home directory (USERPROFILE on Windows, HOME elsewhere). */
 function homeDir() {
   return process.env.USERPROFILE ?? process.env.HOME ?? os.homedir();
-}
-
-/** Default paste root; override with VISION_PASTE_DIR for testing. */
-function pasteRoot() {
-  return process.env.VISION_PASTE_DIR ?? path.join(homeDir(), ".claude", "vision-paste");
-}
-
-/** sha1 hex prefix of image bytes — the dedup key. */
-function hash(bytes) {
-  return createHash("sha1").update(bytes).digest("hex").slice(0, 8);
 }
 
 /** Read and parse the hook JSON from stdin. */
@@ -55,22 +44,6 @@ async function readInput() {
   } catch {
     return {};
   }
-}
-
-/** Parse the transcript text, returning image blocks as { mime, bytes }. */
-function extractImages(text) {
-  const out = [];
-  const re = /\{"type":"image","source":\{"type":"base64","media_type":"([^"]+)","data":"([^"]+)"\}\}/g;
-  let m;
-  while ((m = re.exec(text)) !== null) {
-    try {
-      const bytes = Buffer.from(m[2], "base64");
-      if (bytes.length > 0) out.push({ mime: m[1], bytes });
-    } catch {
-      /* skip malformed */
-    }
-  }
-  return out;
 }
 
 /** Resolve the session transcript path from the hook input. */
@@ -98,68 +71,31 @@ async function resolveTranscript(input) {
   return null;
 }
 
-/** Extract image file paths from the submitted prompt (drag-dropped files). */
-function extractPromptPaths(prompt, max) {
-  const out = [];
-  const re = /(?:[A-Za-z]:[\\/]|\/)[^\s"']+?\.(png|jpe?g|gif|webp)(?:["'\s]|$)/gi;
-  let m;
-  while ((m = re.exec(prompt)) !== null && out.length < max) {
-    const p = m[0].replace(/["'\s]+$/, "");
-    if (existsSync(p) && !out.includes(p)) out.push(p);
-  }
-  return out;
-}
-
-/** Write image bytes to the session paste dir, deduped by sha1. */
-function saveImages(input, images) {
-  const sid = (typeof input.session_id === "string" ? input.session_id : "unknown").slice(0, 8);
-  const dir = path.join(pasteRoot(), sid);
-  mkdirSync(dir, { recursive: true });
-  const saved = [];
-  for (const img of images) {
-    const h = hash(img.bytes);
-    const ext = MIME_EXT[img.mime] ?? "png";
-    const file = path.join(dir, `img-${h}.${ext}`);
-    if (existsSync(file)) continue; // already captured
-    writeFileSync(file, img.bytes);
-    saved.push({ path: file, source: `claude:transcript` });
-  }
-  return saved;
-}
-
 async function main() {
   const input = await readInput();
-  const images = [];
+  let imageCount = 0;
 
-  // 1. Transcript base64 blocks (multi-image, lossless).
-  const transcript = await resolveTranscript(input);
-  if (transcript) {
-    try {
-      const text = readFileSync(transcript, "utf8");
-      const blocks = extractImages(text);
-      if (blocks.length > 0) images.push(...saveImages(input, blocks));
-    } catch {
-      /* transcript unreadable — skip */
+  // 1. `[Image #N]` placeholders in the submitted prompt — the most reliable
+  //    signal: it's THIS message, no transcript lag.
+  const prompt = typeof input.prompt === "string" ? input.prompt : "";
+  const markers = prompt.match(/\[Image #\d+\]/g) ?? [];
+  if (markers.length > 0) {
+    imageCount = markers.length;
+  } else {
+    // 2. Fallback: the session transcript contains image blocks.
+    const transcript = await resolveTranscript(input);
+    if (transcript) {
+      try {
+        const text = readFileSync(transcript, "utf8");
+        const blocks = text.match(/\{"type":"image","source":\{"type":"base64","media_type":"[^"]+","data":"[^"]+"\}\}/g) ?? [];
+        imageCount = blocks.length;
+      } catch {
+        /* transcript unreadable — treat as none */
+      }
     }
   }
 
-  // 2. Drag-dropped image paths from the prompt (zero race, no clipboard).
-  if (typeof input.prompt === "string" && input.prompt) {
-    const paths = extractPromptPaths(input.prompt, 10);
-    for (const p of paths) {
-      images.push({ path: p, source: "prompt:path" });
-    }
-  }
-
-  // Dedup by path before emitting (transcript and prompt may overlap).
-  const seen = new Set();
-  const unique = images.filter((i) => {
-    if (seen.has(i.path)) return false;
-    seen.add(i.path);
-    return true;
-  });
-
-  process.stdout.write(JSON.stringify({ images: unique }));
+  process.stdout.write(JSON.stringify({ imageCount }));
 }
 
-main().catch(() => process.stdout.write(JSON.stringify({ images: [] })));
+main().catch(() => process.stdout.write(JSON.stringify({ imageCount: 0 })));

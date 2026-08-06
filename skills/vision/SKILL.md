@@ -39,16 +39,16 @@ The installer will:
 4. Write the MCP server config into the platform's config file.
 5. Copy this skill into place.
 6. Optionally install the **auto-loop hook** (Claude Code): a UserPromptSubmit
-   hook that captures every image the user pastes (from the session transcript —
-   lossless, multi-image) and drag-dropped file paths from the prompt, so pasted
-   screenshots are captured automatically. No clipboard dependency.
+   hook that detects when the user pasted images and tells you to analyze them
+   with `image="session"` — no snapshot, no lag, all pasted images in one call.
+   No clipboard dependency.
 7. Optionally register the MCP server into **Cowork** (Claude-3p desktop), which
    saves pasted images to files automatically and needs no hook.
 8. Print "restart your agent" instructions.
 
 > **If a `[vision-bridge]` system message appears in your context**, that's the
-> auto-loop hook firing: the user pasted an image and wants you to look at it.
-> Follow it — call `analyze_image` with the paths it gives you.
+> auto-loop hook firing: the user pasted images and wants you to look at them.
+> Follow it — call `analyze_image(image="session", ...)` to analyze them all.
 
 **A2. Manual path — no repo on machine:**
 
