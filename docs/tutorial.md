@@ -9,7 +9,7 @@ text-only coding agent vision by routing images to a multimodal model you
 probably already pay for — mimo, Claude, Gemini, GPT-4o, Qwen-VL. One tool:
 `analyze_image`.
 
-```
+```text
 You (paste a screenshot of an error dialog)
     ↓
 Agent (text-only, calls analyze_image)

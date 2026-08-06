@@ -7,13 +7,13 @@
 
 ## Title
 
-```
+```text
 Show HN: MCP server that gives text-only coding agents (DeepSeek/Qwen/Kimi) vision
 ```
 
 ## URL
 
-```
+```text
 https://github.com/KuaaMU/mcp-vision-bridge
 ```
 

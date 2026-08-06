@@ -35,8 +35,13 @@ What I focused on:
 - **Auto-discovery.** `image="recent"` / `image="session"` find pasted images
   across Claude Code, Codex, opencode, Cowork, Reasonix, and Grok — you never
   type a path. Multi-image in one call, current-session only.
-- **Zero config.** `npx -y mcp-vision-bridge` + 3 env vars. Skill + hook
-  auto-sync into `~/.claude/` on every start.
+- **Zero config.** Install is one command:
+
+  ```bash
+  npx -y mcp-vision-bridge
+  ```
+
+  plus 3 env vars. Skill + hook auto-sync into `~/.claude/` on every start.
 
 Honest note: `task="ocr"` is just a prompt to your vision model — there's no
 bundled OCR engine, the model does the reading.

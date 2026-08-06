@@ -8,7 +8,7 @@ UI、或者那个渲染 bug 的截图。它只会回你一句"我看不到图片
 路由到你大概率已经在付费的多模态模型（mimo、Claude、Gemini、GPT-4o、
 Qwen-VL）上，从而给任何纯文本编码 agent 加上视觉。一个工具：`analyze_image`。
 
-```
+```text
 你（粘贴一张报错截图）
     ↓
 Agent（纯文本，调用 analyze_image）
