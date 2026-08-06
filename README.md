@@ -10,6 +10,8 @@ Works with **Claude Code · Codex · opencode · Kimi · PI · Cursor** and any 
 
 [English](README.md) · [中文](README-CN.md)
 
+<img src="docs/demo/codex-gui-test.png" alt="Pasting two images in Codex GUI — the agent correctly identifies both" width="700"/>
+
 </div>
 
 ---
@@ -141,6 +143,10 @@ Pasting an image into a coding agent stores it somewhere. `image="recent"` /
 ## Demo (mimo-v2.5)
 
 `analyze_image` → describe/ocr → detailed text. The same tool works with any vision model.
+
+**Real usage in Codex GUI** (above): two images pasted, the agent correctly
+identifies both — the Codex welcome screen and a Chris Griffin illustration.
+Auto-discovery found them in `~/.codex/attachments/`; no path was typed.
 
 **OCR a screenshot** → every line reproduced verbatim, including the menu bar
 `文件(F) 编辑(E) 格式(O) 查看(V) 帮助(H)` and the whole body, in reading order.

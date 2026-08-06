@@ -10,6 +10,8 @@ DeepSeek V4 Flash 写代码很厉害——但它看不到你粘贴的错误对�
 
 [English](README.md) · [中文](README-CN.md)
 
+<img src="docs/demo/codex-gui-test.png" alt="在 Codex GUI 里粘贴两张图 —— agent 正确识别两者" width="700"/>
+
 </div>
 
 ---
@@ -124,6 +126,8 @@ analyze_image(
 ## 演示（mimo-v2.5）
 
 `analyze_image` → describe/ocr → 详细文本。同一个工具支持任何视觉模型。
+
+**Codex GUI 实测**（上图）：粘贴两张图，agent 正确识别两者——Codex 欢迎界面和一张 Chris Griffin 插画。自动发现定位到 `~/.codex/attachments/`，无需手动输入路径。
 
 **OCR 一张截图** → 逐行复现，包括菜单栏 `文件(F) 编辑(E) 格式(O) 查看(V) 帮助(H)` 和全部正文，按阅读顺序。
 
