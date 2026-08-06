@@ -4,6 +4,7 @@
 
 [![npm version](https://img.shields.io/npm/v/mcp-vision-bridge.svg)](https://www.npmjs.com/package/mcp-vision-bridge)
 [![Publish](https://github.com/KuaaMU/mcp-vision-bridge/actions/workflows/publish.yml/badge.svg)](https://github.com/KuaaMU/mcp-vision-bridge/actions/workflows/publish.yml)
+[![Glama](https://glama.ai/mcp/servers/KuaaMU/mcp-vision-bridge/badges/score.svg)](https://glama.ai/mcp/servers/KuaaMU/mcp-vision-bridge)
 
 **Give your text-only coding agent eyes.**
 
