@@ -1,7 +1,7 @@
 {
   "name": "mcp-vision-bridge",
   "description": "Give your text-only coding agent (DeepSeek V4 Flash, Qwen, Kimi) vision. Adds an analyze_image MCP tool that routes images through any multimodal model (mimo, Claude, Gemini, GPT-4o) and returns a detailed text description. Paste or drag in one or many images — analyzed in a single call, scoped to the current session. Includes a vision skill and an auto-loop hook that detects pasted images and guides the agent to analyze them.",
-  "version": "0.2.5",
+  "version": "0.2.6",
   "author": {
     "name": "KuaaMU",
     "email": "XCM853629353@gmail.com"
