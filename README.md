@@ -2,6 +2,9 @@
 
 # 👁️ mcp-vision-bridge
 
+[![npm version](https://img.shields.io/npm/v/mcp-vision-bridge.svg)](https://www.npmjs.com/package/mcp-vision-bridge)
+[![Publish](https://github.com/KuaaMU/mcp-vision-bridge/actions/workflows/publish.yml/badge.svg)](https://github.com/KuaaMU/mcp-vision-bridge/actions/workflows/publish.yml)
+
 **Give your text-only coding agent eyes.**
 
 DeepSeek V4 Flash writes great code — but it can't *see* the error dialog, the broken UI, or the screenshot you just pasted. This MCP server gives any text-only agent vision by routing images through a multimodal model of your choice.
@@ -120,7 +123,9 @@ analyze_image(
   pasted image **in this session**), `"session"` (**every image pasted in this
   session, analyzed in one call**), a base64 data URI, or an **array** of these
   to analyze multiple images at once (e.g. "compare these two").
-- **`task`** — common jobs; `ocr` extracts text, `ui` specs a screen, etc.
+- **`task`** — prompt presets for common jobs; `ocr` asks the vision model to
+  extract text, `ui` specs a screen, etc. (There's no bundled OCR engine — the
+  model itself does the reading.)
 - **`prompt`** — free-form question (overrides `task`). **Pass the user's actual
   question here** — the vision model answers what you ask, so a specific question
   ("what error is shown?") beats a generic `describe`.
@@ -143,21 +148,6 @@ Pasting an image into a coding agent stores it somewhere. `image="recent"` /
 > list* on the clipboard — not image bytes. So pasting a local image into a CLI
 > only works if you copy the image *content* (screenshot tool, browser "copy
 > image"). Otherwise just paste the file path — `analyze_image` reads it directly.
-
----
-
-## Demo (mimo-v2.5)
-
-`analyze_image` → describe/ocr → detailed text. The same tool works with any vision model.
-
-**Real usage in Codex GUI** (above): two images pasted, the agent correctly
-identifies both — the Codex welcome screen and a Chris Griffin illustration.
-Auto-discovery found them in `~/.codex/attachments/`; no path was typed.
-
-**OCR a screenshot** → every line reproduced verbatim, including the menu bar
-`文件(F) 编辑(E) 格式(O) 查看(V) 帮助(H)` and the whole body, in reading order.
-
-**Describe a diagram** → elements, spatial layout, colors, and any anomaly, enumerated.
 
 ---
 
@@ -213,6 +203,10 @@ npm run test:e2e       # stdio pipeline against a mock provider
 
 Layout: `src/` (server), `skills/vision/` (skill), `hooks/` (auto-loop hook),
 `install.sh` (installer), `examples/` (per-agent templates).
+
+**Release:** bump the version in `package.json`, push, then
+`git tag vX.Y.Z && git push origin vX.Y.Z` — GitHub Actions runs tests and
+publishes to npm automatically.
 
 ---
 

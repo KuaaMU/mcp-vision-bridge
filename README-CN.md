@@ -2,6 +2,9 @@
 
 # 👁️ mcp-vision-bridge
 
+[![npm version](https://img.shields.io/npm/v/mcp-vision-bridge.svg)](https://www.npmjs.com/package/mcp-vision-bridge)
+[![Publish](https://github.com/KuaaMU/mcp-vision-bridge/actions/workflows/publish.yml/badge.svg)](https://github.com/KuaaMU/mcp-vision-bridge/actions/workflows/publish.yml)
+
 **让纯文本编码智能体拥有眼睛。**
 
 DeepSeek V4 Flash 写代码很厉害——但它看不到你粘贴的错误对话框、坏掉的 UI 或截图。这个 MCP server 通过你选择的多模态模型给任何纯文本 agent 赋予视觉能力。
@@ -107,7 +110,7 @@ analyze_image(
 ```
 
 - **`image`** — 本地路径、http(s) URL、`"clipboard"`、`"recent"`（本会话最近一张）、`"session"`（**本会话全部图片，一次分析**）、base64 data URI，或**数组**一次分析多张（如"对比这两张"）。
-- **`task`** — 常见任务；`ocr` 提取文字，`ui` 描述界面，等等
+- **`task`** — 常见任务的提示词预设；`ocr` 让视觉模型提取文字，`ui` 描述界面，等等（**没有内置 OCR 引擎**——识别由模型本身完成）
 - **`prompt`** — 自由提问（覆盖 `task`）。**把用户的实际问题放这里**——视觉模型会回答你问的，所以一个具体问题（"屏幕上显示什么错误？"）比通用的 `describe` 更准
 
 ### 粘贴的图片如何被发现
@@ -124,18 +127,6 @@ analyze_image(
 | Grok Build | `~/.grok/sessions/*/*/images/` | ✅ |
 
 > **Windows 剪贴板真相：** 在资源管理器里"复制文件"（Ctrl+C）放到剪贴板的是一个*文件列表*——不是图片字节。所以向 CLI 粘贴本地图片，只有当你复制的是图片*内容*（截图工具、浏览器"复制图片"）才有效。否则直接粘贴文件路径——`analyze_image` 直接读取它。
-
----
-
-## 演示（mimo-v2.5）
-
-`analyze_image` → describe/ocr → 详细文本。同一个工具支持任何视觉模型。
-
-**Codex GUI 实测**（上图）：粘贴两张图，agent 正确识别两者——Codex 欢迎界面和一张 Chris Griffin 插画。自动发现定位到 `~/.codex/attachments/`，无需手动输入路径。
-
-**OCR 一张截图** → 逐行复现，包括菜单栏 `文件(F) 编辑(E) 格式(O) 查看(V) 帮助(H)` 和全部正文，按阅读顺序。
-
-**描述一张图** → 元素、空间布局、颜色、任何异常，一一列举。
 
 ---
 
@@ -190,6 +181,9 @@ npm run test:e2e       # 针对 mock provider 的 stdio 流水线
 
 结构：`src/`（server）、`skills/vision/`（skill）、`hooks/`（auto-loop hook）、
 `install.sh`（安装器）、`examples/`（各 agent 模板）。
+
+**发版：** 改 `package.json` 里的版本号，push 后
+`git tag vX.Y.Z && git push origin vX.Y.Z` —— GitHub Actions 会自动跑测试并发布到 npm。
 
 ---
 
