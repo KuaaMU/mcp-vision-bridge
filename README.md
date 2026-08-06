@@ -192,7 +192,7 @@ All via environment variables (the MCP reads them from your agent's server confi
 | `VISION_PROVIDER` | non-openai | `anthropic` \| `gemini` |
 | `VISION_ANTHROPIC_API_KEY` | anthropic | `sk-ant-...` |
 | `VISION_GEMINI_API_KEY` | gemini | `AIza...` |
-| `VISION_MAX_TOKENS` | optional | `2048` (bump to `3000+` for dense screenshots) |
+| `VISION_MAX_TOKENS` | optional | `2048` per image — **auto-scaled ×N for N images** (capped 12000) so multi-image descriptions aren't truncated |
 | `VISION_TIMEOUT_MS` | optional | `30000` |
 | `VISION_BLOCK_PRIVATE_URLS` | optional | `true` to block localhost fetches |
 

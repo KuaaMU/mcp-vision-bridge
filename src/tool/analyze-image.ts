@@ -84,11 +84,17 @@ export async function analyzeImage(
       };
     }
 
+    // Multi-image needs more output room: N images → N× the description tokens,
+    // otherwise the vision model truncates partway through (second image lost).
+    // Scale maxTokens by image count, capped to avoid runaway amplification.
+    const baseMaxTokens = detail === "high" ? config.maxTokens : Math.min(config.maxTokens, 1024);
+    const maxTokens = Math.min(baseMaxTokens * resolved.length, 12000);
+
     const description = await provider.chat({
       images: resolved.map((r) => ({ bytes: r.bytes, mime: r.mime })),
       userPrompt,
       systemPrompt,
-      maxTokens: detail === "high" ? config.maxTokens : Math.min(config.maxTokens, 1024),
+      maxTokens,
     });
 
     if (args.save_to) {

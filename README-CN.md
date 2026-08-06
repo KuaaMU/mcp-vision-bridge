@@ -170,7 +170,7 @@ analyze_image(
 | `VISION_PROVIDER` | 非 openai | `anthropic` \| `gemini` |
 | `VISION_ANTHROPIC_API_KEY` | anthropic | `sk-ant-...` |
 | `VISION_GEMINI_API_KEY` | gemini | `AIza...` |
-| `VISION_MAX_TOKENS` | 可选 | `2048`（密集截图可调到 `3000+`） |
+| `VISION_MAX_TOKENS` | 可选 | `2048` 每张图——**多图时自动 ×N 放大**（上限 12000），避免多图描述被截断 |
 | `VISION_TIMEOUT_MS` | 可选 | `30000` |
 | `VISION_BLOCK_PRIVATE_URLS` | 可选 | `true` 阻止 localhost 抓取 |
 

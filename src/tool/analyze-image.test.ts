@@ -126,4 +126,52 @@ describe("analyzeImage", () => {
       await fs.rm(dir, { recursive: true, force: true });
     }
   });
+
+  it("scales maxTokens up for multi-image input so no image description is truncated", async () => {
+    const calls: any[] = [];
+    const provider: VisionProvider = {
+      name: "spy",
+      chat: async (input) => {
+        calls.push(input);
+        return { text: "ok" };
+      },
+    };
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), "vimg-"));
+    const a = path.join(dir, "a.png");
+    const b = path.join(dir, "b.png");
+    const c = path.join(dir, "c.png");
+    await fs.writeFile(a, pngFixture());
+    await fs.writeFile(b, pngFixture());
+    await fs.writeFile(c, pngFixture());
+    try {
+      // 3 images, base maxTokens 2048 → expect 2048*3 = 6144.
+      await analyzeImage({ image: [a, b, c] }, makeDeps({ provider }));
+      expect(calls).toHaveLength(1);
+      expect(calls[0].images).toHaveLength(3);
+      expect(calls[0].maxTokens).toBe(6144);
+    } finally {
+      await fs.rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("keeps single-image maxTokens unchanged", async () => {
+    const calls: any[] = [];
+    const provider: VisionProvider = {
+      name: "spy",
+      chat: async (input) => {
+        calls.push(input);
+        return { text: "ok" };
+      },
+    };
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), "vimg-"));
+    const a = path.join(dir, "a.png");
+    await fs.writeFile(a, pngFixture());
+    try {
+      await analyzeImage({ image: a }, makeDeps({ provider }));
+      expect(calls).toHaveLength(1);
+      expect(calls[0].maxTokens).toBe(2048);
+    } finally {
+      await fs.rm(dir, { recursive: true, force: true });
+    }
+  });
 });
