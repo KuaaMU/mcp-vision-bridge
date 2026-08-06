@@ -84,11 +84,13 @@ export async function analyzeImage(
       };
     }
 
-    // Multi-image needs more output room: N images → N× the description tokens,
-    // otherwise the vision model truncates partway through (second image lost).
-    // Scale maxTokens by image count, capped to avoid runaway amplification.
-    const baseMaxTokens = detail === "high" ? config.maxTokens : Math.min(config.maxTokens, 1024);
-    const maxTokens = Math.min(baseMaxTokens * resolved.length, 12000);
+    // Token budget per image. Defaults low enough to be cheap but high enough
+    // for dense screenshots / detailed descriptions; users can raise it via
+    // VISION_MAX_TOKENS. Each image gets its OWN budget — multi-image multiplies
+    // the per-image budget, never dilutes it, so N images get N× detail room.
+    const detailCap = detail === "high" ? Infinity : 1024;
+    const perImageBudget = Math.min(Math.max(config.maxTokens, 4096), detailCap);
+    const maxTokens = Math.min(perImageBudget * resolved.length, 32000);
 
     const description = await provider.chat({
       images: resolved.map((r) => ({ bytes: r.bytes, mime: r.mime })),

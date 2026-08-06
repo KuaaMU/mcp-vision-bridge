@@ -144,17 +144,17 @@ describe("analyzeImage", () => {
     await fs.writeFile(b, pngFixture());
     await fs.writeFile(c, pngFixture());
     try {
-      // 3 images, base maxTokens 2048 → expect 2048*3 = 6144.
+      // 3 images, per-image budget 4096 → expect 4096*3 = 12288 (not diluted).
       await analyzeImage({ image: [a, b, c] }, makeDeps({ provider }));
       expect(calls).toHaveLength(1);
       expect(calls[0].images).toHaveLength(3);
-      expect(calls[0].maxTokens).toBe(6144);
+      expect(calls[0].maxTokens).toBe(12288);
     } finally {
       await fs.rm(dir, { recursive: true, force: true });
     }
   });
 
-  it("keeps single-image maxTokens unchanged", async () => {
+  it("keeps a single image at the 4096 per-image budget", async () => {
     const calls: any[] = [];
     const provider: VisionProvider = {
       name: "spy",
@@ -169,7 +169,30 @@ describe("analyzeImage", () => {
     try {
       await analyzeImage({ image: a }, makeDeps({ provider }));
       expect(calls).toHaveLength(1);
-      expect(calls[0].maxTokens).toBe(2048);
+      expect(calls[0].maxTokens).toBe(4096);
+    } finally {
+      await fs.rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("respects a higher VISION_MAX_TOKENS for detailed descriptions", async () => {
+    const calls: any[] = [];
+    const provider: VisionProvider = {
+      name: "spy",
+      chat: async (input) => {
+        calls.push(input);
+        return { text: "ok" };
+      },
+    };
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), "vimg-"));
+    const a = path.join(dir, "a.png");
+    const b = path.join(dir, "b.png");
+    await fs.writeFile(a, pngFixture());
+    await fs.writeFile(b, pngFixture());
+    try {
+      const config = { ...testConfig(), maxTokens: 8000 };
+      await analyzeImage({ image: [a, b] }, makeDeps({ provider, config }));
+      expect(calls[0].maxTokens).toBe(16000);
     } finally {
       await fs.rm(dir, { recursive: true, force: true });
     }

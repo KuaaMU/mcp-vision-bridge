@@ -1,6 +1,6 @@
 {
   "name": "mcp-vision-bridge",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Give text-only LLM coding agents (DeepSeek V4 Flash/Pro, Qwen, Kimi) vision via any multimodal model. One MCP tool, works with Claude Code, opencode, Codex, Kimi Code, PI.",
   "type": "module",
   "main": "dist/index.js",
