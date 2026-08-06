@@ -103,7 +103,8 @@ paste (it can fail silently), just **drag the file in** — a path always works.
 
 ```
 analyze_image(
-  image   = "path | URL | clipboard | recent | session | data:URI",
+  image   = "path | URL | clipboard | recent | session | data:URI",  // single, or
+             ["path","path",...]                                      // several in one call
   task    = "describe | ocr | ui | layout | qa",   // or use prompt:
   prompt  = "What error is on screen?",
   detail  = "high" | "low",
@@ -111,9 +112,10 @@ analyze_image(
 )
 ```
 
-- **`image`** — local path, http(s) URL, `"clipboard"`, `"recent"` (auto-find the
-  last pasted image across Claude Code / Reasonix / Cowork / Codex), `"session"`,
-  or a base64 data URI
+- **`image`** — local path, http(s) URL, `"clipboard"`, `"recent"` (most recent
+  pasted image **in this session**), `"session"` (**every image pasted in this
+  session, analyzed in one call**), a base64 data URI, or an **array** of these
+  to analyze multiple images at once (e.g. "compare these two").
 - **`task`** — common jobs; `ocr` extracts text, `ui` specs a screen, etc.
 - **`prompt`** — free-form question (overrides `task`). **Pass the user's actual
   question here** — the vision model answers what you ask, so a specific question

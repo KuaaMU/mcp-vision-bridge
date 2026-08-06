@@ -146,13 +146,19 @@ Check in this order:
    input box or paste a path** — dragging an image file generates its path in the
    prompt on every platform.
 
-2. **The user pasted an image that WAS captured** (Claude Code CLI `image-cache/`,
+2. **The user pasted images that WERE captured** (Claude Code CLI `image-cache/`,
    Cowork desktop `uploads/`, Codex `attachments/`). Use auto-discovery:
-   - `image="recent"` → analyze the most recently pasted image.
-   - `image="session"` → list/analyze images pasted in this session.
-   → The tool scans Claude Code `~/.claude/image-cache/`, Reasonix sessions/attachments,
-   Cowork uploads, Codex attachments, Grok session images, and Claude transcripts
-   automatically. No clipboard dependency.
+   - `image="recent"` → the most recently pasted image in THIS session.
+   - `image="session"` → **EVERY image pasted in this session, analyzed in one call.**
+   - `image=["a.png","b.png","c.png"]` → explicit multiple images in one call.
+   → When the user pasted several images (you see `[Image #1] [Image #2] [Image #3]`),
+   use `image="session"` (or an array) so the vision model sees ALL of them at
+   once — do NOT loop `analyze_image` per image. The tool scans Claude Code
+   `~/.claude/image-cache/`, Reasonix sessions/attachments, Cowork uploads, Codex
+   attachments, Grok session images, and Claude transcripts automatically.
+   > **Session isolation:** under Claude Code, discovery is scoped to the current
+   > session only — it never reads images from other sessions (privacy + parallel
+   > correctness). If you need a specific file, pass its explicit path.
    > **Claude Code CLI pasting (Windows):** use **Alt+V** to paste an image from
    > the clipboard — the CLI writes it to `~/.claude/image-cache/<uuid>/N.png`,
    > which discovery finds. Note Windows "copy file" in Explorer puts a *file
@@ -182,7 +188,8 @@ Check in this order:
 
 ```
 analyze_image(
-  image   = "<path | URL | clipboard | recent | session | data URI>",
+  image   = "<path | URL | clipboard | recent | session | data URI>"   // single, or
+           = ["<path>", "<path>", ...]                                  // multiple in one call
   task    = "describe" | "ocr" | "ui" | "layout" | "qa",   // or
   prompt  = "<your specific question>",                     // free-form overrides task
   detail  = "high" (default) | "low",

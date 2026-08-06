@@ -94,7 +94,8 @@ git clone https://github.com/KuaaMU/mcp-vision-bridge && cd mcp-vision-bridge
 
 ```
 analyze_image(
-  image   = "path | URL | clipboard | recent | session | data:URI",
+  image   = "path | URL | clipboard | recent | session | data:URI",  // 单个，或
+             ["path","path",...]                                      // 一次多张
   task    = "describe | ocr | ui | layout | qa",   // 或用 prompt:
   prompt  = "What error is on screen?",
   detail  = "high" | "low",
@@ -102,7 +103,7 @@ analyze_image(
 )
 ```
 
-- **`image`** — 本地路径、http(s) URL、`"clipboard"`、`"recent"`（在 Claude Code / Reasonix / Cowork / Codex 里自动找最近粘贴的图）、`"session"`，或 base64 data URI
+- **`image`** — 本地路径、http(s) URL、`"clipboard"`、`"recent"`（本会话最近一张）、`"session"`（**本会话全部图片，一次分析**）、base64 data URI，或**数组**一次分析多张（如"对比这两张"）。
 - **`task`** — 常见任务；`ocr` 提取文字，`ui` 描述界面，等等
 - **`prompt`** — 自由提问（覆盖 `task`）。**把用户的实际问题放这里**——视觉模型会回答你问的，所以一个具体问题（"屏幕上显示什么错误？"）比通用的 `describe` 更准
 

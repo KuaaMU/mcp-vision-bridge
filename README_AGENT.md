@@ -32,8 +32,9 @@ only way to look.
 |---|---|
 | User gave a file path, or one exists in the workspace/prompt | **`image="<path>"` — best, works everywhere.** Use this whenever a path is available. |
 | User dragged an image file into the chat | The drag inserts a real path in the prompt. Use it directly: `image="<that path>"`. |
-| User pasted an image (Claude Code CLI / Reasonix / Cowork / Codex / Grok) | `image="recent"` — auto-finds the most recent pasted image across agents |
-| User pasted several images in this session | `image="session"` — list/analyze images pasted in the current session |
+| User pasted an image (Claude Code CLI / Reasonix / Cowork / Codex / Grok) | `image="recent"` — the most recent pasted image in this session |
+| User pasted several images in this session | **`image="session"` — analyzes ALL of them in one call.** Or `image=["a.png","b.png"]`. Do NOT loop per-image |
+| User gave multiple file paths | `image=["/path/1.png","/path/2.png"]` — all analyzed in one request |
 
 **`recent`/`session` scans these on-disk locations automatically** (no clipboard):
 
@@ -45,6 +46,10 @@ only way to look.
 | Cowork (Claude-3p desktop) | `%LOCALAPPDATA%\Claude-3p\...\uploads\*_image.png` |
 | Codex | `~/.codex/attachments/<session>/image-*.png` |
 | Grok Build | `~/.grok/sessions/*/*/images/` |
+
+**Session isolation (Claude Code):** `recent`/`session` are scoped to the
+current session only — they never return images pasted in other sessions
+(privacy + parallel correctness). For another session's file, pass its path.
 
 | User just took a screenshot / copied an image to clipboard | `image="clipboard"` — reads the OS clipboard |
 | User pasted an image and you got `[Unsupported Image]` / nothing | **The desktop-GUI paste may have failed silently.** Ask the user to **drag the image file into the chat** (inserts a path) or paste a path, then use it |
