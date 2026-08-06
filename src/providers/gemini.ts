@@ -41,7 +41,9 @@ export class GeminiProvider implements VisionProvider {
         {
           role: "user",
           parts: [
-            { inline_data: { mime_type: input.mime, data: input.imageBytes.toString("base64") } },
+            ...input.images.map((img) => ({
+              inline_data: { mime_type: img.mime, data: img.bytes.toString("base64") },
+            })),
             { text: input.userPrompt },
           ],
         },

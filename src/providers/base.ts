@@ -7,9 +7,19 @@
  * which upstream is behind the interface.
  */
 
-export interface VisionChatInput {
-  imageBytes: Buffer;
+/** One resolved image ready to send upstream. */
+export interface ProviderImage {
+  bytes: Buffer;
   mime: string;
+}
+
+export interface VisionChatInput {
+  /**
+   * One or more images to analyze in a single request. Providers fan them out
+   * as multiple image parts, so the model sees all of them at once (e.g. for
+   * "compare these two" / "describe each" prompts).
+   */
+  images: ProviderImage[];
   userPrompt: string;
   systemPrompt: string;
   maxTokens: number;

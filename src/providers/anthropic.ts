@@ -45,14 +45,14 @@ export class AnthropicProvider implements VisionProvider {
         {
           role: "user",
           content: [
-            {
+            ...input.images.map((img) => ({
               type: "image",
               source: {
                 type: "base64",
-                media_type: input.mime,
-                data: input.imageBytes.toString("base64"),
+                media_type: img.mime,
+                data: img.bytes.toString("base64"),
               },
-            },
+            })),
             { type: "text", text: input.userPrompt },
           ],
         },

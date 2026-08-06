@@ -35,12 +35,74 @@ function baseConfig(overrides: Partial<Config> = {}): Config {
 }
 
 const input = {
-  imageBytes: pngFixture(),
-  mime: "image/png",
+  images: [{ bytes: pngFixture(), mime: "image/png" }],
   userPrompt: "What is in this image?",
   systemPrompt: "You are a vision assistant.",
   maxTokens: 512,
 };
+
+describe("multi-image support", () => {
+  it("sends multiple image parts in one OpenAI request", async () => {
+    const fetchFn = vi.fn(async () =>
+      mockResponse({ choices: [{ message: { content: "two images" } }] }),
+    ) as unknown as typeof fetch;
+    const provider = new OpenAIProvider({
+      baseUrl: "https://api.openai.com/v1",
+      apiKey: "sk-test",
+      model: "m",
+      maxTokens: 2048,
+      timeoutMs: 5000,
+      fetchFn,
+    });
+    await provider.chat({
+      images: [
+        { bytes: pngFixture(), mime: "image/png" },
+        { bytes: pngFixture(), mime: "image/png" },
+      ],
+      userPrompt: "compare",
+      systemPrompt: "s",
+      maxTokens: 512,
+    });
+    const [url, init] = (fetchFn as ReturnType<typeof vi.fn>).mock.calls[0] as [
+      string,
+      RequestInit,
+    ];
+    void url;
+    const body = JSON.parse(String(init.body));
+    expect(body.messages[1].content.filter((p: any) => p.type === "image_url")).toHaveLength(2);
+  });
+
+  it("sends multiple inline_data parts in one Gemini request", async () => {
+    const fetchFn = vi.fn(async () =>
+      mockResponse({ candidates: [{ content: { parts: [{ text: "ok" }] } }] }),
+    ) as unknown as typeof fetch;
+    const provider = new GeminiProvider({
+      baseUrl: "https://generativelanguage.googleapis.com",
+      apiKey: "ai-test",
+      model: "gemini-2.0-flash",
+      maxTokens: 2048,
+      timeoutMs: 5000,
+      fetchFn,
+    });
+    await provider.chat({
+      images: [
+        { bytes: pngFixture(), mime: "image/png" },
+        { bytes: pngFixture(), mime: "image/png" },
+        { bytes: pngFixture(), mime: "image/png" },
+      ],
+      userPrompt: "compare",
+      systemPrompt: "s",
+      maxTokens: 512,
+    });
+    const [url, init] = (fetchFn as ReturnType<typeof vi.fn>).mock.calls[0] as [
+      string,
+      RequestInit,
+    ];
+    void url;
+    const body = JSON.parse(String(init.body));
+    expect(body.contents[0].parts.filter((p: any) => p.inline_data)).toHaveLength(3);
+  });
+});
 
 describe("OpenAIProvider", () => {
   it("sends a chat completion with the image and returns text", async () => {

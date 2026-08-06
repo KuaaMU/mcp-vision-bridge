@@ -41,6 +41,45 @@ function homeDir(): string {
   return process.env.USERPROFILE ?? process.env.HOME ?? os.homedir();
 }
 
+/**
+ * Current Claude Code session id, when running under Claude Code.
+ * Claude Code injects this into MCP server processes; other agents (opencode,
+ * Codex, Reasonix, ...) do not, so this returns null there.
+ */
+export function currentSessionId(): string | null {
+  return process.env.CLAUDE_CODE_SESSION_ID ?? null;
+}
+
+/**
+ * Find the transcript file for a specific session id under ~/.claude/projects/.
+ * Returns null when the session has no on-disk transcript.
+ */
+async function findSessionTranscript(sessionId: string): Promise<string | null> {
+  const root = path.join(homeDir(), ".claude", "projects");
+  let found: string | null = null;
+  async function walk(dir: string) {
+    if (found) return;
+    let entries;
+    try {
+      entries = await fs.readdir(dir, { withFileTypes: true });
+    } catch {
+      return;
+    }
+    for (const e of entries) {
+      if (found) return;
+      const full = path.join(dir, e.name);
+      if (e.isDirectory()) {
+        await walk(full);
+      } else if (e.isFile() && e.name === `${sessionId}.jsonl`) {
+        found = full;
+        return;
+      }
+    }
+  }
+  await walk(root);
+  return found;
+}
+
 /** LocalAppData on Windows, else ~/.local/share (XDG data home). */
 function localAppDataDir(): string {
   if (process.env.LOCALAPPDATA) return process.env.LOCALAPPDATA;
@@ -312,6 +351,14 @@ export interface DiscoverOptions {
   limit?: number;
   /** Whether to also read Claude Code transcripts (slower). */
   includeClaudeTranscript?: boolean;
+  /**
+   * When true, only return images from the CURRENT session (Claude Code):
+   * the session's own transcript + matching image-cache. Cross-session sources
+   * (Cowork uploads, Codex, Reasonix, opencode, other transcripts) are skipped
+   * so parallel sessions never see each other's pastes. No-op when
+   * CLAUDE_CODE_SESSION_ID is absent (non-Claude-Code agents keep cross-source).
+   */
+  sessionScoped?: boolean;
 }
 
 /**
@@ -324,6 +371,34 @@ export async function findRecentImages(
   const limit = opts.limit ?? 10;
   const all: DiscoveredImage[] = [];
   const home = homeDir();
+
+  // Session-scoped mode: only the current session's own pastes. Parallel
+  // sessions must never see each other's images. Sources that are inherently
+  // cross-session (Cowork uploads, Codex, Grok, Reasonix, opencode) are skipped.
+  if (opts.sessionScoped) {
+    const sessionId = currentSessionId();
+    if (sessionId) {
+      // 1. Current session transcript (authoritative for pasted images).
+      if (opts.includeClaudeTranscript !== false) {
+        const transcript = await findSessionTranscript(sessionId);
+        if (transcript) {
+          try {
+            const text = await fs.readFile(transcript, "utf8");
+            all.push(...extractImagesFromTranscript(text, limit));
+          } catch {
+            /* skip */
+          }
+        }
+      }
+      // 2. image-cache entries that belong to this session (dir name matches).
+      const imageCacheRoot = path.join(home, ".claude", "image-cache");
+      const cacheSessionDir = path.join(imageCacheRoot, sessionId);
+      all.push(...(await scanDirForImages(cacheSessionDir, "claude:image-cache", limit)));
+      // Fall back to the dedup/sort tail below; nothing cross-session is added.
+      return finalize(all, limit);
+    }
+    // No session id (not Claude Code) — fall through to cross-source discovery.
+  }
 
   // 1. Cowork / Claude-3p desktop pasted images (real files, no clipboard).
   all.push(...(await scanCoworkUploads(limit)));
@@ -365,6 +440,11 @@ export async function findRecentImages(
 
   // Newest first, dedupe by filePath (or content hash for in-memory bytes),
   // cap at limit.
+  return finalize(all, limit);
+}
+
+/** Sort newest-first, dedupe by path or content hash, cap at limit. */
+function finalize(all: DiscoveredImage[], limit: number): DiscoveredImage[] {
   all.sort((a, b) => b.mtimeMs - a.mtimeMs);
   const seen = new Set<string>();
   const unique: DiscoveredImage[] = [];

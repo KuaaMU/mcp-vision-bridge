@@ -39,14 +39,15 @@ export function buildServer(config = loadConfig()) {
       "Analyze an image using a multimodal model and return a detailed text description.",
       "The vision model sees the image; the calling agent is text-only and cannot.",
       "",
-      "Sources for `image` (pick one):",
+      "Sources for `image` (pick one, or pass an array to analyze several at once):",
       '  - "path": absolute or relative path to a local image file (PNG/JPEG/WEBP/GIF)',
       "  - URL: http(s) URL to an image on the web or a local server",
       '  - "data:...": base64 data URI, e.g. data:image/png;base64,<payload>',
       '  - "clipboard": read the image currently copied to the system clipboard',
-      '  - "recent": auto-find the most recently pasted image (scans Codex attachments, Grok session images, Claude transcripts)',
-      '  - "session": auto-find images pasted in this session',
+      '  - "recent": auto-find the most recently pasted image in THIS session',
+      '  - "session": auto-find EVERY image pasted in this session (analyze them all in one call)',
       '  - "raw": the string itself is the literal raw image bytes',
+      '  - ["a.png", "b.png", ...]: array of any of the above — all analyzed in one request',
       "",
       "Pick `task` for common jobs (describe | ocr | ui | layout | qa) or pass your own `prompt`.",
       "`detail` defaults to \"high\" for maximum completeness.",
@@ -54,9 +55,10 @@ export function buildServer(config = loadConfig()) {
     ].join("\n"),
     {
       image: z
-        .string()
-        .min(1)
-        .describe("Image source: file path, URL, data: URI, 'clipboard', 'recent', 'session', or 'raw'."),
+        .union([z.string().min(1), z.array(z.string().min(1))])
+        .describe(
+          "Image source(s): a file path, URL, data: URI, 'clipboard', 'recent', 'session', 'raw', or an array of any of these to analyze multiple images in one call. 'session' analyzes every image pasted in the current session.",
+        ),
       prompt: z
         .string()
         .optional()

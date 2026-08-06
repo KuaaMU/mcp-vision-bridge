@@ -47,13 +47,13 @@ export class OpenAIProvider implements VisionProvider {
         {
           role: "user",
           content: [
-            {
+            ...input.images.map((img) => ({
               type: "image_url",
               image_url: {
-                url: `data:${input.mime};base64,${input.imageBytes.toString("base64")}`,
+                url: `data:${img.mime};base64,${img.bytes.toString("base64")}`,
                 detail: "high",
               },
-            },
+            })),
             { type: "text", text: input.userPrompt },
           ],
         },

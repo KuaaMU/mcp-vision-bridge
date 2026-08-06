@@ -10,13 +10,13 @@
 import type { Config } from "../config.js";
 import { VisionError } from "../errors.js";
 import { ImageCache } from "../image/cache.js";
-import { resolveImage, type ResolveOptions } from "../image/resolver.js";
+import { resolveImages, type ResolveOptions } from "../image/resolver.js";
 import { defaultSystemPrompt, presetFor, assertTaskName } from "../prompt/presets.js";
 import type { VisionProvider } from "../providers/base.js";
 import { saveDescription } from "../output.js";
 
 export interface AnalyzeImageArgs {
-  image: string;
+  image: string | string[];
   prompt?: string;
   task?: string;
   detail?: "low" | "high";
@@ -73,11 +73,19 @@ export async function analyzeImage(
       clipboardConfig: { clipboardDir: config.clipboardDir },
     };
 
-    const image = await resolveImage(args.image, resolveOptions);
+    // Accept a single source or an array; "session"/"recent" expand to the
+    // current session's pasted images so several can be analyzed in one call.
+    const sources = Array.isArray(args.image) ? args.image : [args.image];
+    const resolved = await resolveImages(sources, resolveOptions);
+    if (resolved.length === 0) {
+      return {
+        content: [{ type: "text", text: "Error: No images were resolved for analysis." }],
+        isError: true,
+      };
+    }
 
     const description = await provider.chat({
-      imageBytes: image.bytes,
-      mime: image.mime,
+      images: resolved.map((r) => ({ bytes: r.bytes, mime: r.mime })),
       userPrompt,
       systemPrompt,
       maxTokens: detail === "high" ? config.maxTokens : Math.min(config.maxTokens, 1024),

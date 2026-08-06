@@ -101,9 +101,13 @@ export async function resolveImage(
     return finish(bytes, "clipboard");
   }
 
-  // Auto-discovery: find recently pasted images across agents.
+  // Auto-discovery: find recently pasted images. Session-scoped under Claude
+  // Code so parallel sessions never see each other's pastes.
   if (kind === "recent" || kind === "session") {
-    const images = await findRecentImages({ limit: kind === "session" ? 10 : 1 });
+    const images = await findRecentImages({
+      limit: kind === "session" ? 50 : 1,
+      sessionScoped: true,
+    });
     if (images.length === 0) {
       throw invalidInput(
         `No images found for "${input}". Paste an image into your agent first, ` +
@@ -216,6 +220,49 @@ export async function resolveImage(
 
   await opts.cache.set(cacheKey, bytes);
   return finish(bytes, kind);
+}
+
+/**
+ * Resolve multiple image sources to bytes + MIME in one call.
+ * Accepts an array of sources (paths / URLs / data URIs / keywords) or a single
+ * string. `"session"` returns the current session's pasted images (all of
+ * them); `"recent"` returns just the most recent. Sources are resolved
+ * independently and any failure surfaces as an error.
+ */
+export async function resolveImages(
+  inputs: string[],
+  opts: ResolveOptions,
+): Promise<ResolvedImage[]> {
+  // Special case: "session" / "recent" expand to every discovered image in the
+  // current session, so they return multiple in one call.
+  const expanded: string[] = [];
+  for (const input of inputs) {
+    const { kind } = classifySource(input);
+    if (kind === "session" || kind === "recent") {
+      const discovered = await findRecentImages({
+        limit: 100,
+        sessionScoped: true,
+      });
+      for (const img of discovered) {
+        if (img.filePath) expanded.push(img.filePath);
+        else if (img.bytes) expanded.push(`data:${img.mime};base64,${img.bytes.toString("base64")}`);
+      }
+    } else {
+      expanded.push(input);
+    }
+  }
+
+  if (expanded.length === 0) {
+    throw invalidInput(
+      'No images found. Paste an image into your agent first, or pass explicit paths / URLs / data URIs.',
+    );
+  }
+
+  const out: ResolvedImage[] = [];
+  for (const src of expanded) {
+    out.push(await resolveImage(src, opts));
+  }
+  return out;
 }
 
 function finish(bytes: Buffer, source: string): ResolvedImage {
