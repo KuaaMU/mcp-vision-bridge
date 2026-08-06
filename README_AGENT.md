@@ -56,6 +56,12 @@ on clipboard or paste attachment, which some desktop GUIs drop silently.
 
 ## Choosing `task` vs `prompt`
 
+**Always pass the user's actual question as `prompt` when you know it.** The
+vision model answers what you ask — a specific question ("what error is shown",
+"is the button disabled") beats a generic describe. This is the **focus-hint**
+principle: the model targets the question, not a broad description. When using
+`image="recent"` / `"session"`, carry the user's question into `prompt` too.
+
 - `task="describe"` — exhaustive description: every element, verbatim text, layout, colors, anomalies.
 - `task="ocr"` — extract all visible text verbatim, in reading order.
 - `task="ui"` — functional UI spec: components, labels, states, positions, behavior clues.

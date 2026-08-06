@@ -12,7 +12,8 @@
     "dist",
     "skills",
     "hooks",
-    "examples"
+    "examples",
+    "README-CN.md"
   ],
   "engines": {
     "node": ">=18.0.0"

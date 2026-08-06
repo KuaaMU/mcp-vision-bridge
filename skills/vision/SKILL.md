@@ -191,6 +191,11 @@ analyze_image(
 ```
 
 **Choosing `task` vs `prompt`:**
+- **Always pass the user's actual question as `prompt` when you know it.** The
+  vision model answers what you ask — a specific question ("what error is shown",
+  "is the button disabled") beats a generic describe. This is the focus-hint
+  principle: the model targets the question, not a broad description. When using
+  `image="recent"` / `"session"`, carry the user's question into `prompt` too.
 - `describe` — exhaustive description (everything, verbatim text, layout, colors, anomalies). Use for "what's in this image".
 - `ocr` — extract all text verbatim. Use for "read the text / transcribe".
 - `ui` — functional UI spec (components, labels, states, layout). Use for app/site screenshots.

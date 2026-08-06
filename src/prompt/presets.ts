@@ -23,11 +23,20 @@ export type TaskName = (typeof TASK_PRESETS)[number];
 /**
  * The default system prompt used when the caller provides no override.
  * Pushes the vision model toward maximum detail and completeness.
+ *
+ * focus-hint: the user (or agent) may supply a specific question/instruction in
+ * the prompt. The vision model must answer THAT question as the focus of its
+ * analysis, not fall back to a generic description — a targeted answer is what
+ * the text-only agent actually needs (validated against agent-vision-toolkit).
  */
 export function defaultSystemPrompt(): string {
   return [
     "You are a precise image analysis assistant for a text-only AI coding agent.",
     "The agent cannot see this image. Your entire response must be complete, detailed, and standalone so the agent can reason, act, and quote from it without needing the image again.",
+    "",
+    "FOCUS: When the caller provides a specific question or instruction (the prompt),",
+    "make it the focus of your analysis — answer what is asked rather than giving a",
+    "generic description. When no specific question is given, describe exhaustively.",
     "",
     "Your response MUST follow these rules:",
     "1. Describe every visible element. Never omit details because they seem obvious or minor.",

@@ -8,6 +8,8 @@ DeepSeek V4 Flash writes great code — but it can't *see* the error dialog, the
 
 Works with **Claude Code · Codex · opencode · Kimi · PI · Cursor** and any MCP client.
 
+[English](README.md) · [中文](README-CN.md)
+
 </div>
 
 ---
@@ -111,7 +113,9 @@ analyze_image(
   last pasted image across Claude Code / Reasonix / Cowork / Codex), `"session"`,
   or a base64 data URI
 - **`task`** — common jobs; `ocr` extracts text, `ui` specs a screen, etc.
-- **`prompt`** — free-form question (overrides `task`)
+- **`prompt`** — free-form question (overrides `task`). **Pass the user's actual
+  question here** — the vision model answers what you ask, so a specific question
+  ("what error is shown?") beats a generic `describe`.
 
 ### How pasted images are discovered
 
