@@ -42,6 +42,10 @@ claude plugin install mcp-vision-bridge
 
 That's it — the plugin bundles the **MCP server + vision skill + auto-loop hook**. Claude Code will prompt you for your vision endpoint, API key, and model once.
 
+> **Auto-updating:** the MCP server self-syncs the bundled skill + hook into
+> `~/.claude/` on startup, so every restart pulls the latest version along with
+> the npm package. Set `VISION_NO_SYNC=1` to disable auto-sync.
+
 > Prefer to manage it in **cc-switch** (see it + sync to Codex/opencode/Gemini)? Use the installer below instead.
 
 ### Codex / Reasonix / opencode / Kimi / anything else (one command)

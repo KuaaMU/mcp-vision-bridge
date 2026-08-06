@@ -37,6 +37,9 @@ claude plugin install mcp-vision-bridge
 
 就这些——插件捆绑了 **MCP server + vision skill + auto-loop hook**。Claude Code 会提示你配置一次视觉端点、API key 和模型。
 
+> **自动更新：** MCP server 启动时会自动把捆绑的 skill + hook 同步到
+> `~/.claude/`，所以每次重启都会随 npm 包一起更新到最新版。设 `VISION_NO_SYNC=1` 可关闭自动同步。
+
 > 想用 **cc-switch** 管理（能看到它 + 同步到 Codex/opencode/Gemini）？用下面的安装脚本。
 
 ### Codex / Reasonix / opencode / Kimi / 其他（一条命令）

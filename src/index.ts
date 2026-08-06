@@ -22,6 +22,7 @@ import { loadConfig } from "./config.js";
 import { ImageCache } from "./image/cache.js";
 import { createProvider } from "./providers/factory.js";
 import { makeAnalyzeHandler, type AnalyzeImageArgs } from "./tool/analyze-image.js";
+import { selfSync } from "./self-sync.js";
 
 export function buildServer(config = loadConfig()) {
   const cache = new ImageCache(config.cacheDir);
@@ -85,6 +86,9 @@ export function buildServer(config = loadConfig()) {
 }
 
 export async function main(): Promise<void> {
+  // Sync the bundled skill + hook into the user's ~/.claude so they track the
+  // npm package version. Silent: a failure must never block the MCP server.
+  await selfSync().catch(() => {});
   const server = buildServer();
   const transport = new StdioServerTransport();
   await server.connect(transport);
