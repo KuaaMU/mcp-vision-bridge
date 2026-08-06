@@ -16,16 +16,11 @@
  * starting. Set VISION_NO_SYNC=1 to disable.
  */
 import { promises as fs } from "node:fs";
-import * as os from "node:os";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
+import { homeDir } from "./paths.js";
 
-/** Home directory (USERPROFILE on Windows, HOME elsewhere). */
-function homeDir(): string {
-  return process.env.USERPROFILE ?? process.env.HOME ?? os.homedir();
-}
-
-/** Package root: dist/index.js is at <root>/dist/index.js. */
+/** Package root: dist/self-sync.js is at <root>/dist/self-sync.js. */
 function packageRoot(): string {
   const here = fileURLToPath(import.meta.url); // .../mcp-vision-bridge/dist/self-sync.js
   return path.resolve(path.dirname(here), "..");
@@ -81,7 +76,9 @@ async function ensureHookRegistered(settingsPath: string): Promise<void> {
  * Sync the bundled skill + hooks into the user's ~/.claude so they follow the
  * npm package version. Never throws. Returns a short report for debugging.
  */
-export async function selfSync(overrides: { root?: string; home?: string } = {}): Promise<string[]> {
+export async function selfSync(
+  overrides: { root?: string; home?: string } = {},
+): Promise<string[]> {
   if (process.env.VISION_NO_SYNC === "1") return [];
   const root = overrides.root ?? packageRoot();
   const home = overrides.home ?? homeDir();

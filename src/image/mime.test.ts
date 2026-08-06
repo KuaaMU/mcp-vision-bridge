@@ -33,7 +33,5 @@ describe("assertSupportedImage", () => {
 });
 
 it("SUPPORTED_MIMES contains the standard raster formats", () => {
-  expect(SUPPORTED_MIMES).toEqual(
-    new Set(["image/png", "image/jpeg", "image/webp", "image/gif"]),
-  );
+  expect(SUPPORTED_MIMES).toEqual(new Set(["image/png", "image/jpeg", "image/webp", "image/gif"]));
 });

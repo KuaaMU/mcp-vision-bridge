@@ -6,12 +6,7 @@
 
 import { unsupportedMime } from "../errors.js";
 
-export const SUPPORTED_MIMES = new Set([
-  "image/png",
-  "image/jpeg",
-  "image/webp",
-  "image/gif",
-]);
+export const SUPPORTED_MIMES = new Set(["image/png", "image/jpeg", "image/webp", "image/gif"]);
 
 /**
  * Detect the MIME type from magic bytes. Returns undefined when the bytes are
@@ -54,12 +49,7 @@ export function detectMime(bytes: Uint8Array): string | undefined {
   }
 
   // GIF: 'GIF8' (87a or 89a)
-  if (
-    bytes[0] === 0x47 &&
-    bytes[1] === 0x49 &&
-    bytes[2] === 0x46 &&
-    bytes[3] === 0x38
-  ) {
+  if (bytes[0] === 0x47 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x38) {
     return "image/gif";
   }
 

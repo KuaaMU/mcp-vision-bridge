@@ -55,10 +55,7 @@ export function makeAnalyzeHandler(deps: ToolDeps) {
   };
 }
 
-export async function analyzeImage(
-  args: AnalyzeImageArgs,
-  deps: ToolDeps,
-): Promise<ToolResult> {
+export async function analyzeImage(args: AnalyzeImageArgs, deps: ToolDeps): Promise<ToolResult> {
   try {
     const { config, provider, cache } = deps;
     const task = args.task !== undefined ? assertTaskName(args.task) : "describe";
@@ -88,8 +85,7 @@ export async function analyzeImage(
     // for dense screenshots / detailed descriptions; users can raise it via
     // VISION_MAX_TOKENS. Each image gets its OWN budget — multi-image multiplies
     // the per-image budget, never dilutes it, so N images get N× detail room.
-    const detailCap = detail === "high" ? Infinity : 1024;
-    const perImageBudget = Math.min(Math.max(config.maxTokens, 4096), detailCap);
+    const perImageBudget = detail === "high" ? Math.max(config.maxTokens, 4096) : 1024;
     const maxTokens = Math.min(perImageBudget * resolved.length, 32000);
 
     const description = await provider.chat({

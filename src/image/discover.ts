@@ -10,8 +10,9 @@
  *       %LOCALAPPDATA%\Claude-3p\local-agent-mode-sessions\<acct>\00000000\local_*\uploads\<uuid>-<ts>_image.png
  *   - Codex:       ~/.codex/attachments/<session>/image-*.png|jpg
  *   - Grok Build:  ~/.grok/sessions/<cwd>/<session>/images/
- *   - Claude Code: session transcripts (*.jsonl) with base64 image blocks,
- *       plus our own hook snapshots under ~/.claude/vision-paste/
+ *   - Claude Code: session transcripts (*.jsonl) with base64 image blocks
+ *   - Reasonix:     ~/.reasonix/sessions/ + project .reasonix/attachments/
+ *   - opencode:     ~/.local/share/opencode/opencode.db (SQLite part table)
  *
  * The caller (analyze_image with image="recent" / "session") uses these to
  * analyze pasted screenshots reliably, including multiple images.
@@ -19,8 +20,8 @@
 
 import { promises as fs } from "node:fs";
 import { createHash } from "node:crypto";
-import * as os from "node:os";
 import * as path from "node:path";
+import { homeDir, localAppDataDir, appDataDir } from "../paths.js";
 
 export interface DiscoveredImage {
   /** Source label for errors/cache keys. */
@@ -35,11 +36,6 @@ export interface DiscoveredImage {
 
 /** Image file extensions we accept when scanning directories. */
 const IMAGE_EXT = /\.(png|jpe?g|gif|webp)$/i;
-
-/** Home directory, cross-platform (USERPROFILE on Windows, HOME elsewhere). */
-function homeDir(): string {
-  return process.env.USERPROFILE ?? process.env.HOME ?? os.homedir();
-}
 
 /**
  * Current Claude Code session id, when running under Claude Code.
@@ -78,20 +74,6 @@ async function findSessionTranscript(sessionId: string): Promise<string | null> 
   }
   await walk(root);
   return found;
-}
-
-/** LocalAppData on Windows, else ~/.local/share (XDG data home). */
-function localAppDataDir(): string {
-  if (process.env.LOCALAPPDATA) return process.env.LOCALAPPDATA;
-  const home = homeDir();
-  return path.join(home, ".local", "share");
-}
-
-/** AppData on Windows, else ~/.config (XDG config home). */
-function appDataDir(): string {
-  if (process.env.APPDATA) return process.env.APPDATA;
-  const home = homeDir();
-  return path.join(home, ".config");
 }
 
 /**
@@ -166,11 +148,7 @@ async function scanDirForImages(
  * previews, which must NOT be mistaken for user pastes.
  */
 async function scanCoworkUploads(limit: number): Promise<DiscoveredImage[]> {
-  const root = path.join(
-    localAppDataDir(),
-    "Claude-3p",
-    "local-agent-mode-sessions",
-  );
+  const root = path.join(localAppDataDir(), "Claude-3p", "local-agent-mode-sessions");
   const out: DiscoveredImage[] = [];
   async function walk(dir: string) {
     let entries;
@@ -275,7 +253,10 @@ async function findRecentTranscripts(limit: number): Promise<string[]> {
       }
     }),
   );
-  return byTime.sort((a, b) => b.m - a.m).slice(0, limit).map((x) => x.t);
+  return byTime
+    .sort((a, b) => b.m - a.m)
+    .slice(0, limit)
+    .map((x) => x.t);
 }
 
 /**
@@ -365,9 +346,7 @@ export interface DiscoverOptions {
  * Find the most recently pasted images across the agents we support.
  * Newest first, deduplicated, capped at `limit`.
  */
-export async function findRecentImages(
-  opts: DiscoverOptions = {},
-): Promise<DiscoveredImage[]> {
+export async function findRecentImages(opts: DiscoverOptions = {}): Promise<DiscoveredImage[]> {
   const limit = opts.limit ?? 10;
   const all: DiscoveredImage[] = [];
   const home = homeDir();

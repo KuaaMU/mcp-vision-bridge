@@ -34,8 +34,7 @@ export class GeminiProvider implements VisionProvider {
     }
 
     const baseUrl = this.options.baseUrl.replace(/\/+$/, "");
-    const url =
-      `${baseUrl}/v1beta/models/${this.options.model}:generateContent?key=${encodeURIComponent(this.options.apiKey)}`;
+    const url = `${baseUrl}/v1beta/models/${this.options.model}:generateContent?key=${encodeURIComponent(this.options.apiKey)}`;
     const body = {
       contents: [
         {
@@ -80,9 +79,7 @@ export class GeminiProvider implements VisionProvider {
     if (!text) {
       const block = data?.promptFeedback?.blockReason;
       throw providerError(
-        block
-          ? `Gemini blocked this request (${block}).`
-          : "Gemini returned an empty response.",
+        block ? `Gemini blocked this request (${block}).` : "Gemini returned an empty response.",
       );
     }
 

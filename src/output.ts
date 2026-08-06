@@ -10,10 +10,7 @@ import { promises as fs } from "node:fs";
 import * as path from "node:path";
 import { ioError } from "./errors.js";
 
-export async function saveDescription(
-  filePath: string,
-  text: string,
-): Promise<string> {
+export async function saveDescription(filePath: string, text: string): Promise<string> {
   const dir = path.dirname(filePath);
   try {
     await fs.mkdir(dir, { recursive: true });

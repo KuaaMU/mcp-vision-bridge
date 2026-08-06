@@ -3,7 +3,6 @@ import { selfSync } from "./self-sync.js";
 import { promises as fs } from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { pngFixture } from "./__fixtures__/images.js";
 
 describe("selfSync", () => {
   let root: string;
@@ -29,8 +28,13 @@ describe("selfSync", () => {
 
   it("copies the skill and hooks into ~/.claude", async () => {
     const report = await selfSync({ root, home });
-    expect(report).toEqual(expect.arrayContaining(["skill", "hook:vision-clipboard.sh", "hook:vision-capture.mjs"]));
-    const skill = await fs.readFile(path.join(home, ".claude", "skills", "vision", "SKILL.md"), "utf8");
+    expect(report).toEqual(
+      expect.arrayContaining(["skill", "hook:vision-clipboard.sh", "hook:vision-capture.mjs"]),
+    );
+    const skill = await fs.readFile(
+      path.join(home, ".claude", "skills", "vision", "SKILL.md"),
+      "utf8",
+    );
     expect(skill).toBe("# vision skill\n");
     await expect(
       fs.access(path.join(home, ".claude", "hooks", "vision-clipboard.sh")),

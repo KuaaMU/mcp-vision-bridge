@@ -83,10 +83,7 @@ function looksLikeRawImage(input: string): boolean {
  * Resolve `input` to image bytes + MIME. The cache is checked first (keyed by
  * source) and populated on miss.
  */
-export async function resolveImage(
-  input: string,
-  opts: ResolveOptions,
-): Promise<ResolvedImage> {
+export async function resolveImage(input: string, opts: ResolveOptions): Promise<ResolvedImage> {
   const { kind, cacheKey } = classifySource(input);
 
   // Clipboard is inherently volatile — never cache it.
@@ -165,14 +162,18 @@ export async function resolveImage(
         const response = await (opts.fetchFn ?? fetch)(input, {
           signal: controller.signal,
           redirect: "follow",
-          headers: { "User-Agent": "llm-vision-mcp/0.1" },
+          headers: { "User-Agent": "mcp-vision-bridge" },
         });
         if (!response.ok) {
-          throw imageFetchFailed(`HTTP ${response.status} ${response.statusText} fetching "${input}".`);
+          throw imageFetchFailed(
+            `HTTP ${response.status} ${response.statusText} fetching "${input}".`,
+          );
         }
         const buf = Buffer.from(await response.arrayBuffer());
         if (buf.length > MAX_BYTES) {
-          throw imageFetchFailed(`Image at "${input}" exceeds the ${MAX_BYTES / 1024 / 1024}MB limit.`);
+          throw imageFetchFailed(
+            `Image at "${input}" exceeds the ${MAX_BYTES / 1024 / 1024}MB limit.`,
+          );
         }
         bytes = buf;
       } catch (err) {
@@ -194,9 +195,7 @@ export async function resolveImage(
       const isBase64 = match[2] !== undefined;
       const payload = match[3];
       try {
-        bytes = isBase64
-          ? Buffer.from(payload, "base64")
-          : Buffer.from(payload, "utf8");
+        bytes = isBase64 ? Buffer.from(payload, "base64") : Buffer.from(payload, "utf8");
       } catch {
         throw invalidInput("data: URI payload is not valid base64.");
       }
@@ -233,20 +232,29 @@ export async function resolveImages(
   inputs: string[],
   opts: ResolveOptions,
 ): Promise<ResolvedImage[]> {
-  // Special case: "session" / "recent" expand to every discovered image in the
-  // current session, so they return multiple in one call.
+  // Special case: "session" expands to every pasted image in the current
+  // session; "recent" expands to just the most recent one.
   const expanded: string[] = [];
   for (const input of inputs) {
     const { kind } = classifySource(input);
-    if (kind === "session" || kind === "recent") {
+    if (kind === "session") {
       const discovered = await findRecentImages({
         limit: 100,
         sessionScoped: true,
       });
       for (const img of discovered) {
         if (img.filePath) expanded.push(img.filePath);
-        else if (img.bytes) expanded.push(`data:${img.mime};base64,${img.bytes.toString("base64")}`);
+        else if (img.bytes)
+          expanded.push(`data:${img.mime};base64,${img.bytes.toString("base64")}`);
       }
+    } else if (kind === "recent") {
+      const discovered = await findRecentImages({
+        limit: 1,
+        sessionScoped: true,
+      });
+      const img = discovered[0];
+      if (img?.filePath) expanded.push(img.filePath);
+      else if (img?.bytes) expanded.push(`data:${img.mime};base64,${img.bytes.toString("base64")}`);
     } else {
       expanded.push(input);
     }
@@ -254,7 +262,7 @@ export async function resolveImages(
 
   if (expanded.length === 0) {
     throw invalidInput(
-      'No images found. Paste an image into your agent first, or pass explicit paths / URLs / data URIs.',
+      "No images found. Paste an image into your agent first, or pass explicit paths / URLs / data URIs.",
     );
   }
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * llm-vision-mcp — Model Context Protocol server that gives text-only LLM
+ * mcp-vision-bridge — Model Context Protocol server that gives text-only LLM
  * coding agents vision.
  *
  * The server exposes a single `analyze_image` tool. A text-only agent calls it
@@ -18,11 +18,25 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import * as path from "node:path";
 import { loadConfig } from "./config.js";
 import { ImageCache } from "./image/cache.js";
 import { createProvider } from "./providers/factory.js";
 import { makeAnalyzeHandler, type AnalyzeImageArgs } from "./tool/analyze-image.js";
 import { selfSync } from "./self-sync.js";
+
+/** Read the package version from package.json next to the built module. */
+function packageVersion(): string {
+  try {
+    const here = fileURLToPath(import.meta.url); // .../dist/index.js
+    const pkg = path.resolve(path.dirname(here), "..", "package.json");
+    return JSON.parse(readFileSync(pkg, "utf8")).version ?? "0.0.0";
+  } catch {
+    return "0.0.0";
+  }
+}
 
 export function buildServer(config = loadConfig()) {
   const cache = new ImageCache(config.cacheDir);
@@ -30,8 +44,8 @@ export function buildServer(config = loadConfig()) {
   const handleAnalyzeImage = makeAnalyzeHandler({ config, provider, cache });
 
   const server = new McpServer({
-    name: "llm-vision-mcp",
-    version: "0.1.0",
+    name: "mcp-vision-bridge",
+    version: packageVersion(),
   });
 
   server.tool(
@@ -51,7 +65,7 @@ export function buildServer(config = loadConfig()) {
       '  - ["a.png", "b.png", ...]: array of any of the above — all analyzed in one request',
       "",
       "Pick `task` for common jobs (describe | ocr | ui | layout | qa) or pass your own `prompt`.",
-      "`detail` defaults to \"high\" for maximum completeness.",
+      '`detail` defaults to "high" for maximum completeness.',
       "Use `save_to` to write a long description to a file and get back only a path + summary.",
     ].join("\n"),
     {

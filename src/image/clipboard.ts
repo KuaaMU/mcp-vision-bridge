@@ -27,14 +27,6 @@ export interface ClipboardConfig {
   clipboardDir: string;
 }
 
-function isWindows(): boolean {
-  return process.platform === "win32";
-}
-
-function isMac(): boolean {
-  return process.platform === "darwin";
-}
-
 /**
  * Resolve the current platform's clipboard image reader CLI. Returns
  * [command, args] or undefined when the platform has no supported mechanism.
@@ -44,7 +36,14 @@ export function clipboardReader(
 ): { command: string; args: string[] } | undefined {
   switch (platform) {
     case "win32":
-      return { command: "powershell", args: ["-NoProfile", "-Command", "Get-Clipboard -Format Image -ErrorAction SilentlyContinue"] };
+      return {
+        command: "powershell",
+        args: [
+          "-NoProfile",
+          "-Command",
+          "Get-Clipboard -Format Image -ErrorAction SilentlyContinue",
+        ],
+      };
     case "darwin":
       return { command: "pbpaste", args: ["-Prefer", "png"] };
     case "linux":
@@ -57,7 +56,7 @@ export function clipboardReader(
 /** Read the current clipboard image, or null if none is present. */
 export async function readClipboardImage(
   platform: NodeJS.Platform = process.platform,
-  config: ClipboardConfig = { clipboardDir: ".llm-vision-mcp/clipboard" },
+  config: ClipboardConfig = { clipboardDir: ".mcp-vision-bridge/clipboard" },
 ): Promise<Buffer | null> {
   const reader = clipboardReader(platform);
   if (reader === undefined) {

@@ -64,7 +64,7 @@ export function loadConfig(envVars: NodeJS.ProcessEnv = process.env): Config {
     clipboardDir: envVars.VISION_CLIPBOARD_DIR ?? defaultClipboardDir(),
     timeoutMs: intEnv(envVars.VISION_TIMEOUT_MS, 90_000),
     blockPrivateUrls: envVars.VISION_BLOCK_PRIVATE_URLS === "true",
-    serverHomepage: "https://github.com/KuaaMU/llm-vision-mcp",
+    serverHomepage: "https://github.com/KuaaMU/mcp-vision-bridge",
   };
 
   return config;
@@ -89,6 +89,6 @@ function intEnv(value: string | undefined, fallback: number): number {
 
 function defaultClipboardDir(): string {
   const home = process.env.HOME ?? process.env.USERPROFILE ?? "";
-  if (home) return `${home}/.llm-vision-mcp/clipboard`;
-  return ".llm-vision-mcp/clipboard";
+  if (home) return `${home}/.claude/mcp-vision-bridge/clipboard`;
+  return ".mcp-vision-bridge/clipboard";
 }

@@ -1,5 +1,5 @@
 /**
- * Error hierarchy for llm-vision-mcp.
+ * Error hierarchy for mcp-vision-bridge.
  *
  * Errors are categorized so the tool handler can surface a clear, actionable
  * message to the text-only agent (which cannot see the image and must rely on

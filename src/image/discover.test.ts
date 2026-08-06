@@ -19,7 +19,11 @@ describe("extractImagesFromTranscript", () => {
   it("extracts base64 image blocks from a transcript", () => {
     const png = pngFixture().toString("base64");
     const transcript = JSON.stringify({
-      message: { content: [{ type: "image", source: { type: "base64", media_type: "image/png", data: png } }] },
+      message: {
+        content: [
+          { type: "image", source: { type: "base64", media_type: "image/png", data: png } },
+        ],
+      },
     });
     const images = extractImagesFromTranscript(transcript, 10);
     expect(images.length).toBe(1);
@@ -53,16 +57,29 @@ describe("findRecentImages", () => {
     const base = await fs.mkdtemp(path.join(os.tmpdir(), "cowork-"));
     const restore = setLocalAppData(base);
     const uploads = path.join(
-      base, "Claude-3p", "local-agent-mode-sessions", "acct",
-      "00000000", "local_abc", "uploads",
+      base,
+      "Claude-3p",
+      "local-agent-mode-sessions",
+      "acct",
+      "00000000",
+      "local_abc",
+      "uploads",
     );
     const outputs = path.join(
-      base, "Claude-3p", "local-agent-mode-sessions", "acct",
-      "00000000", "local_abc", "outputs",
+      base,
+      "Claude-3p",
+      "local-agent-mode-sessions",
+      "acct",
+      "00000000",
+      "local_abc",
+      "outputs",
     );
     await fs.mkdir(uploads, { recursive: true });
     await fs.mkdir(outputs, { recursive: true });
-    const pasted = path.join(uploads, "1d2c4e1f-9673-4ef6-85a7-e7e3c01e5ae4-1785939828901_image.png");
+    const pasted = path.join(
+      uploads,
+      "1d2c4e1f-9673-4ef6-85a7-e7e3c01e5ae4-1785939828901_image.png",
+    );
     await fs.writeFile(pasted, pngFixture());
     await fs.writeFile(path.join(uploads, "note.txt"), "not an image");
     await fs.writeFile(path.join(outputs, "preview.png"), pngFixture()); // must be excluded
@@ -141,8 +158,13 @@ describe("findRecentImages", () => {
     const tmp = await fs.mkdtemp(path.join(os.tmpdir(), "opencode-"));
     const prevHome = process.env.USERPROFILE ?? process.env.HOME;
     const restore = () => {
-      if (prevHome) { process.env.USERPROFILE = prevHome; process.env.HOME = prevHome; }
-      else { delete process.env.USERPROFILE; delete process.env.HOME; }
+      if (prevHome) {
+        process.env.USERPROFILE = prevHome;
+        process.env.HOME = prevHome;
+      } else {
+        delete process.env.USERPROFILE;
+        delete process.env.HOME;
+      }
     };
     process.env.USERPROFILE = tmp;
     process.env.HOME = tmp;
@@ -150,10 +172,21 @@ describe("findRecentImages", () => {
       const dbDir = path.join(tmp, ".local", "share", "opencode");
       await fs.mkdir(dbDir, { recursive: true });
       const db = new DatabaseSync(path.join(dbDir, "opencode.db"));
-      db.exec(`CREATE TABLE part (id TEXT, message_id TEXT, session_id TEXT, time_created INTEGER, time_updated INTEGER, data TEXT)`);
+      db.exec(
+        `CREATE TABLE part (id TEXT, message_id TEXT, session_id TEXT, time_created INTEGER, time_updated INTEGER, data TEXT)`,
+      );
       db.prepare(`INSERT INTO part VALUES (?, ?, ?, ?, ?, ?)`).run(
-        "p1", "m1", "s1", Date.now(), Date.now(),
-        JSON.stringify({ type: "file", mime: "image/png", filename: "clipboard", url: `data:image/png;base64,${pngFixture().toString("base64")}` }),
+        "p1",
+        "m1",
+        "s1",
+        Date.now(),
+        Date.now(),
+        JSON.stringify({
+          type: "file",
+          mime: "image/png",
+          filename: "clipboard",
+          url: `data:image/png;base64,${pngFixture().toString("base64")}`,
+        }),
       );
       db.close();
       const images = await findRecentImages({ limit: 10, includeClaudeTranscript: false });

@@ -21,10 +21,10 @@ function testConfig(): Config {
     geminiApiKey: "",
     maxTokens: 2048,
     cacheDir: null,
-    clipboardDir: ".llm-vision-mcp/clipboard",
+    clipboardDir: ".mcp-vision-bridge/clipboard",
     timeoutMs: 5000,
     blockPrivateUrls: false,
-    serverHomepage: "https://github.com/KuaaMU/llm-vision-mcp",
+    serverHomepage: "https://github.com/KuaaMU/mcp-vision-bridge",
   };
 }
 
@@ -100,10 +100,7 @@ describe("analyzeImage", () => {
   });
 
   it("returns an error for a missing file", async () => {
-    const result = await analyzeImage(
-      { image: "C:\\nope\\missing.png" },
-      makeDeps(),
-    );
+    const result = await analyzeImage({ image: "C:\\nope\\missing.png" }, makeDeps());
     expect(result.isError).toBe(true);
     expect(result.content[0].text).toMatch(/Could not read image file/);
   });

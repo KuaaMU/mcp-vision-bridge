@@ -26,10 +26,10 @@ function baseConfig(overrides: Partial<Config> = {}): Config {
     geminiApiKey: "ai-test",
     maxTokens: 2048,
     cacheDir: null,
-    clipboardDir: ".llm-vision-mcp/clipboard",
+    clipboardDir: ".mcp-vision-bridge/clipboard",
     timeoutMs: 5000,
     blockPrivateUrls: false,
-    serverHomepage: "https://github.com/KuaaMU/llm-vision-mcp",
+    serverHomepage: "https://github.com/KuaaMU/mcp-vision-bridge",
     ...overrides,
   };
 }
@@ -185,7 +185,10 @@ describe("AnthropicProvider", () => {
 
   it("throws when max_tokens truncates", async () => {
     const fetchFn = (async () =>
-      mockResponse({ content: [{ type: "text", text: "partial" }], stop_reason: "max_tokens" })) as unknown as typeof fetch;
+      mockResponse({
+        content: [{ type: "text", text: "partial" }],
+        stop_reason: "max_tokens",
+      })) as unknown as typeof fetch;
     const provider = new AnthropicProvider({
       baseUrl: "https://api.anthropic.com",
       apiKey: "k",

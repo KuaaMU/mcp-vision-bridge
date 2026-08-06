@@ -10,13 +10,7 @@
 
 import { invalidInput } from "../errors.js";
 
-export const TASK_PRESETS = [
-  "describe",
-  "ocr",
-  "ui",
-  "layout",
-  "qa",
-] as const;
+export const TASK_PRESETS = ["describe", "ocr", "ui", "layout", "qa"] as const;
 
 export type TaskName = (typeof TASK_PRESETS)[number];
 

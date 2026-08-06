@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { resolveImage, classifySource, type ResolveOptions } from "./resolver.js";
 import { ImageCache } from "./cache.js";
-import { pngFixture, jpegFixture, textFixture } from "../__fixtures__/images.js";
+import { pngFixture } from "../__fixtures__/images.js";
 import { promises as fs } from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
@@ -49,9 +49,9 @@ describe("resolveImage", () => {
   });
 
   it("throws a clear error for a missing file", async () => {
-    await expect(
-      resolveImage("C:\\definitely\\missing\\x.png", makeOpts()),
-    ).rejects.toThrow(/Could not read image file/);
+    await expect(resolveImage("C:\\definitely\\missing\\x.png", makeOpts())).rejects.toThrow(
+      /Could not read image file/,
+    );
   });
 
   it("resolves a URL through the injected fetch", async () => {
@@ -60,10 +60,7 @@ describe("resolveImage", () => {
         status: 200,
         headers: { "content-type": "image/png" },
       })) as unknown as typeof fetch;
-    const resolved = await resolveImage(
-      "https://example.com/a.png",
-      makeOpts({ fetchFn }),
-    );
+    const resolved = await resolveImage("https://example.com/a.png", makeOpts({ fetchFn }));
     expect(resolved.mime).toBe("image/png");
   });
 
@@ -98,8 +95,8 @@ describe("resolveImage", () => {
   });
 
   it("caches by source so a second resolution hits the cache", async () => {
-    const fetchFn = vi.fn(async () =>
-      new Response(pngFixture(), { status: 200 }),
+    const fetchFn = vi.fn(
+      async () => new Response(pngFixture(), { status: 200 }),
     ) as unknown as typeof fetch;
     const opts = makeOpts({ fetchFn });
     const a = await resolveImage("https://example.com/c.png", opts);
