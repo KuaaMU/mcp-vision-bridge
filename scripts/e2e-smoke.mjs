@@ -41,7 +41,16 @@ const mock = createServer((req, res) => {
       JSON.stringify({
         id: "chatcmpl-e2e",
         model: parsed?.model ?? "mock-model",
-        choices: [{ index: 0, message: { role: "assistant", content: "E2E: I see a red circle with the text 'HELLO'." }, finish_reason: "stop" }],
+        choices: [
+          {
+            index: 0,
+            message: {
+              role: "assistant",
+              content: "E2E: I see a red circle with the text 'HELLO'.",
+            },
+            finish_reason: "stop",
+          },
+        ],
       }),
     );
   });

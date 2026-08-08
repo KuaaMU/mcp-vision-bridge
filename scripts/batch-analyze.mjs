@@ -32,9 +32,7 @@ const config = loadConfig({
 const provider = createProvider(config);
 const cache = new ImageCache(null);
 
-const files = (await fs.readdir(dir))
-  .filter((f) => /\.(png|jpe?g|webp|gif)$/i.test(f))
-  .sort();
+const files = (await fs.readdir(dir)).filter((f) => /\.(png|jpe?g|webp|gif)$/i.test(f)).sort();
 
 console.log(`Analyzing ${files.length} images in "${dir}" with ${config.model} (task=${task})\n`);
 for (const file of files) {

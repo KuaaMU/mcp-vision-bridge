@@ -47,18 +47,21 @@ that talks to it. This one is **local, one command, zero config**:
 ## Install — pick your agent
 
 **Claude Code (plugin, one command):**
+
 ```bash
 claude plugin marketplace add KuaaMU/agent-plugins
 claude plugin install mcp-vision-bridge
 ```
 
 **Anything else (Codex, opencode, Kimi, PI…):**
+
 ```bash
 git clone https://github.com/KuaaMU/mcp-vision-bridge && cd mcp-vision-bridge
 ./install.sh            # auto-detects your agent
 ```
 
 **Manual (any MCP client):**
+
 ```json
 {
   "command": "npx",
